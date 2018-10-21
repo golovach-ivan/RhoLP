@@ -1,0 +1,11 @@
+
+git clone https://github.com/golovach-ivan/RhoLP.git
+git add .
+git commit -m "..."
+git push
+
+// https://git-scm.com/book/en/v2/Git-Basics-Tagging
+git tag -a v0.0 -m "..."
+git tag
+git show v0.0
+git push origin v0.0
