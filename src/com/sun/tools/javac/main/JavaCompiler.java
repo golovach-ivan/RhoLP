@@ -62,7 +62,7 @@ import static javax.tools.StandardLocation.CLASS_OUTPUT;
 import static com.sun.tools.javac.util.ListBuffer.lb;
 
 // TEMP, until we have a more efficient way to save doc comment info
-import com.sun.tools.javac.parser.DocCommentScanner;
+//import com.sun.tools.javac.parser.DocCommentScanner;
 
 import java.util.HashMap;
 import java.util.Queue;
@@ -953,8 +953,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
             processAnnotations = procEnvImpl.atLeastOneProcessor();
 
             if (processAnnotations) {
-                if (context.get(Scanner.Factory.scannerFactoryKey) == null)
-                    DocCommentScanner.Factory.preRegister(context);
+//                if (context.get(Scanner.Factory.scannerFactoryKey) == null)
+//                    DocCommentScanner.Factory.preRegister(context);
                 options.put("save-parameter-names", "save-parameter-names");
                 reader.saveParameterNames = true;
                 keepComments = true;

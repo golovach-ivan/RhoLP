@@ -168,7 +168,7 @@ public class JavacTaskImpl extends JavacTask {
                 throw new IllegalArgumentException("Malformed arguments " + filenames.toString(" "));
             compiler = JavaCompiler.instance(context);
             // force the use of the scanner that captures Javadoc comments
-            com.sun.tools.javac.parser.DocCommentScanner.Factory.preRegister(context);
+//            com.sun.tools.javac.parser.DocCommentScanner.Factory.preRegister(context);
             compiler.keepComments = true;
             compiler.genEndPos = true;
             // NOTE: this value will be updated after annotation processing
