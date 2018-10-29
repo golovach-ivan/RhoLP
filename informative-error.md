@@ -15,11 +15,16 @@
 ### UTF identifiers + $
 
 ### Absent operators
-%, #, >>, <<, /=, += ... 
+- anithing with: ^, $, #, ?
+- incorrect: 
+  - %  
+  - >>, >>>, <<, <<<, ::, 
+  - <-, <=
+  - /=, +=, *=, -= 
 
 ### Absent keywords
 'class', 'object', 'function', 'property', 'private', 'public', 'protecfed', 'default', 'constructor', 'this', 'self',    
-int, byte, string, short, float, double, char, Char, array, return, case
+int, byte, string, short, float, double, char, Char, array, return, case, as of, do, while, loop, forall, import, let, module, newtype, type, where
 
 ### Keywords normalization (typo error recovery)
 null -> Nil, 
