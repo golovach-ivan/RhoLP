@@ -8,38 +8,34 @@
 - Absent analisys
   - Absent operators
   - Absent keywords
-  - Absent UTF support: identifier (пиво, рыба), strings ("aa\uFFFFbb")
+  - Absent UTF support: identifier ($, UTF: пиво, рыба), strings ("aa\uFFFFbb")
 - Diagnostics API
-  - standart error format, 
+  - standart error format, error codes, error line, selection (from, to)
 
 ### Absent operators
-- anithing with: ^, $, #, ?
-- incorrect: 
-  - %  
-  - >>, >>>, <<, <<<, ::, &&, ||, 
-  - <-, <=
-  - /=, +=, *=, -= 
+- ^, $, #, ?, %, & 
+- &&, ||, >>, <<, >>>, ::
+- ^^, \*\*, >>=, ::=, \\, \\\\, 
+- <-, <=, ->
+- +=, -=, \*=, /=, &=, |=, ^=, %=, <<=, >>=, >>>=
+
+
 
 ### Absent keywords
 - 2: as, of, in, do, eq, or
-- 3: div, mul, add, sub, pow, mod, neq xml, int, def, let, end, not
+- 3: uri, url, Url, div, mul, add, sub, pow, mod, neq xml, int, def, let, end, not
 - 4: this, self, json, type, byte, char, case, loop, send
 - 5: class, throw, super, until, yield, where, begin, break, short, float, array, while
 - 6: object, public, throws, module, scheme, import, string, double, return, forall 
-- 7: private, default, integerб defined, newtype, receive
-- 8: function, property, continue
-- 9: protected
+- 7: private, default, integer, defined, newtype, receive, extends, boolean 
+- 8: function, property, continue, 
+- 9: protected, 
+- 0: instanceof, implements  
 
+- "val xs = 'A' :: 'B' :: 'C' :: Nil"
+- "while (@x > 0) {x++}"
+- "do {x++} while (x < 42)"
 
-
-
-
-
-### Keywords normalization (typo error recovery)
-null -> Nil, 
-
-### Char literals
-'AAA'
 
 Detect as error any varian of [Java-style floating-point literals](https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.10.2) except [HexadecimalFloatingPointLiteral](https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-HexadecimalFloatingPointLiteral).
 - "1f", "1F", "1d", "1D"
