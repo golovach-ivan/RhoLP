@@ -2,29 +2,38 @@
 
 - Non-existed literals
   - Integer problems: too big integer literals, absent HEX format, absent Binary format, Long postfix notation
-  - Floating-point literals
-  - Char literals
+  - Floating-point literals: \[-+\]?\[0-9\]\*\.?\[0-9\]*\[eE\]\[0-9\]*\[fFdD\]
+  - Char literals, 'a', '\uFFFF'
+  - String encodings: "\n\r\t\f"
 - Absent analisys
   - Absent operators
   - Absent keywords
-  - Absent UTF support
-- Better Diagnostics
-  - API
-  - context: original string, generated AST
-
-### UTF identifiers + $
+  - Absent UTF support: identifier (пиво, рыба), strings ("aa\uFFFFbb")
+- Diagnostics API
+  - standart error format, 
 
 ### Absent operators
 - anithing with: ^, $, #, ?
 - incorrect: 
   - %  
-  - >>, >>>, <<, <<<, ::, 
+  - >>, >>>, <<, <<<, ::, &&, ||, 
   - <-, <=
   - /=, +=, *=, -= 
 
 ### Absent keywords
-'class', 'object', 'function', 'property', 'private', 'public', 'protecfed', 'default', 'constructor', 'this', 'self',    
-int, byte, string, short, float, double, char, Char, array, return, case, as of, do, while, loop, forall, import, let, module, newtype, type, where
+- 2: as, of, in, do, eq, or
+- 3: div, mul, add, sub, pow, mod, neq xml, int, def, let, end, not
+- 4: this, self, json, type, byte, char, case, loop, send
+- 5: class, throw, super, until, yield, where, begin, break, short, float, array, while
+- 6: object, public, throws, module, scheme, import, string, double, return, forall 
+- 7: private, default, integerб defined, newtype, receive
+- 8: function, property, continue
+- 9: protected
+
+
+
+
+
 
 ### Keywords normalization (typo error recovery)
 null -> Nil, 
@@ -52,4 +61,4 @@ Detect as error any varian of [Java-style floating-point literals](https://docs.
 - "1.e-1", "1.e-1f", "1.e-1F", "1.e-1d", "1.e-1D"
 
 ### Misused operators: PARSER
-=> 
+=> , !, %%
