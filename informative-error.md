@@ -1,10 +1,32 @@
 ## Informative error
 
-### Too big integer literals
+- Non-existed literals
+  - Integer problems: too big integer literals, absent HEX format, absent Binary format, Long postfix notation
+  - Floating-point literals
+  - Char literals
+- Absent analisys
+  - Absent operators
+  - Absent keywords
+  - Absent UTF support
+- Better Diagnostics
+  - API
+  - context: original string, generated AST
 
-### Long literals
+### UTF identifiers + $
 
-### Floating-point literals
+### Absent operators
+%, #, >>, <<, /=, += ... 
+
+### Absent keywords
+'class', 'object', 'function', 'property', 'private', 'public', 'protecfed', 'default', 'constructor', 'this', 'self',    
+int, byte, string, short, float, double, char, Char, array, return, case
+
+### Keywords normalization (typo error recovery)
+null -> Nil, 
+
+### Char literals
+'AAA'
+
 Detect as error any varian of [Java-style floating-point literals](https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-3.10.2) except [HexadecimalFloatingPointLiteral](https://docs.oracle.com/javase/specs/jls/se11/html/jls-3.html#jls-HexadecimalFloatingPointLiteral).
 - "1f", "1F", "1d", "1D"
 - "1.1", "1.1f", "1.1F", "1.1d", "1.1D"
@@ -24,17 +46,5 @@ Detect as error any varian of [Java-style floating-point literals](https://docs.
 - "1.e+1", "1.e+1f", "1.e+1F", "1.e+1d", "1.e+1D"
 - "1.e-1", "1.e-1f", "1.e-1F", "1.e-1d", "1.e-1D"
 
-### UTF identifiers + $
-
-### Absent operators
-%, #, >>, <<, /=, += ... 
-
-### Absent keywords
-'class', 'object', 'function', 'property', 'private', 'public', 'protecfed', 'default', 'constructor', 'this', 'self',    
-int, byte, string, short, float, double, char, Char, array, return
-
-### Keywords normalization (typo error recovery)
-null -> Nil, 
-
-### Char literals
-'AAA'
+### Misused operators: PARSER
+=> 
