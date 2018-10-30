@@ -1,5 +1,10 @@
 ## Informative error
 
+- General improvements
+  - Diagnostics API: standart error format, error codes
+  - Multiple error  
+  - Советы о синтаксисе
+  - Граммотный ответ на типичные ошибки: '+=', '&', '&&', '%'
 - Non-existed literals
   - Integer problems: too big integer literals, absent HEX format, absent Binary format, Long postfix notation
   - Floating-point literals: \[-+\]?\[0-9\]\*\.?\[0-9\]*\[eE\]\[0-9\]*\[fFdD\]
@@ -9,8 +14,6 @@
   - Absent operators
   - Absent keywords
   - Absent UTF support: identifier ($, UTF: пиво, рыба), strings ("aa\uFFFFbb")
-- Diagnostics API
-  - standart error format, error codes, error line, selection (from, to)
 
 ### Absent operators
 - ^, $, #, ?, %, & 
