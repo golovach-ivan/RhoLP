@@ -3,6 +3,49 @@
 
 Based on OpenJDk [javac 6](http://hg.openjdk.java.net/jdk6/jdk6/langtools/file/72a2f02b7355/src/share/classes/com/sun) deep refactoring.
 
+### Example/Demo
+```java
+import net.golovach.rholp.*;
+import net.golovach.rholp.log.*;
+import java.util.List;
+
+public class Demo {
+    public static void main(String[] args) {
+        String content =
+                "type T = Functor[({ type λ[α] = Map[Int, α] })#λ]";
+        DiagnosticListener listener = new DiagnosticCollapsedPrinter();
+        RhoLexer lexer = new RhoLexer(content, listener);
+        List<RhoTokenType> tokens = lexer.scanAll();
+    }
+}
+```
+```
+NOTE
+  Error code: lexer.note.identifier-like-absent-keyword
+  Message: identifier 'type' like absent keyword, may cause confusion
+  Line/Column: [1, 1]
+  ----------
+  type T = Functor[({ type λ[α] = Map[Int, α] })#λ]
+  ^^^^
+
+ERROR
+  Error code: lexer.err.non-existent.unicode.identifiers
+  Messages:
+    there is no Unicode support: 'λ', codepoint = 955, char[] = '\u03BB'
+    there is no Unicode support: 'α', codepoint = 945, char[] = '\u03B1'
+  Line/Column: [1, 26], [1, 28], [1, 42], [1, 48]
+  ----------
+  type T = Functor[({ type λ[α] = Map[Int, α] })#λ]
+                           ^ ^             ^     ^ 
+ERROR
+  Error code: lexer.err.non-existent.operator
+  Message:    there is no operator '#'
+  Line/Column: [1, 47]
+  ----------
+  type T = Functor[({ type λ[α] = Map[Int, α] })#λ]
+                                                ^ 
+```
+
 ### Lexer/Scanner (javac 6)
 ```java
 import com.sun.tools.javac.parser.Scanner;
