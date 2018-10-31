@@ -1,0 +1,22 @@
+
+unclosed.str.lit
+unclosed.uri.lit
+
+nonexistent.singlequote.lit
+nonexistent.unclosed.singlequote.lit
+
+    static final String content = "contract 'aaa\"bbb\"`ccc`";
+
+
+"%"
+    there is no '%' operator only '%%'
+    [ERROR, EOF]
+
+
+1) восстанавливается после сбоев
+2) обнаруживает несуществующие операторы: "%", " 'aaa' ", "?"
+
+
+- too big ints
+- detect long literals: '123L'/'123l'
+- detect double/float literals in many formats: '1.1', '.1', '1.', '1e1' (f/F/d/D)
