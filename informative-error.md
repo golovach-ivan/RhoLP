@@ -1,5 +1,15 @@
 ## Informative error
 
+- Lexer sceleton: Diagnostics API - 12
+  - Standard error format, error codes
+  - Error/warn messages database
+  - One scan - multiple diagnostic messages
+- Non-existed literals handling
+  - Int problems: too big integer literals, absent Hex/Binary format ('0xFF', '0b1010')
+  - Floating-point literals: '42.42e-42f'
+  - Char literals: 'A', '\uFFFF'
+  
+
 - General improvements
   - Diagnostics API: standart error format, error codes
   - Multiple error  
@@ -10,10 +20,10 @@
   - Floating-point literals: \[-+\]?\[0-9\]\*\.?\[0-9\]*\[eE\]\[0-9\]*\[fFdD\]
   - Char literals, 'a', '\uFFFF'
   - String encodings: "\n\r\t\f"
-- Absent analisys
-  - Absent operators
-  - Absent keywords
-  - Absent UTF support: identifier ($, UTF: пиво, рыба), strings ("aa\uFFFFbb")
+- Non-existed token types
+  - Absent operators: '->', '%', '&', '&&', '^', etc
+  - Absent keywords: 'do', 'int', 'this', etc
+  - Absent UTF support
 
 ### Absent operators
 - ^, $, #, ?, %, & 
