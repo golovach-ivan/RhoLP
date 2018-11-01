@@ -1,6 +1,6 @@
 ## Informative error
 
-- Lexer sceleton: Diagnostics API - 12
+- Lexer sceleton: Diagnostics API
   - Standard error format, error codes
   - Error/warn messages database
   - One scan - multiple diagnostic messages
@@ -8,7 +8,10 @@
   - Int problems: too big integer literals, absent Hex/Binary format ('0xFF', '0b1010')
   - Floating-point literals: '42.42e-42f'
   - Char literals: 'A', '\uFFFF'
-  
+- Non-existed token types
+  - Absent operators: '->', '%', '&', '&&', '^', etc
+  - Absent keywords: 'do', 'int', 'this', etc
+  - Absent UTF support
 
 - General improvements
   - Diagnostics API: standart error format, error codes
