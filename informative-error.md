@@ -38,14 +38,14 @@
 
 
 ### Absent keywords
-- 2: as, of, in, do, eq, or
-- 3: uri, url, Url, div, mul, add, sub, pow, mod, neq xml, int, def, let, end, not
-- 4: this, self, json, type, byte, char, case, loop, send
+- 2: as, of, do, eq
+- 3: url, div, mul, add, sub, pow, mod, neq, xml, def, let, end, Map
+- 4: this, self, json, type, byte, char, case, loop, send, list, long
 - 5: class, throw, super, until, yield, where, begin, break, short, float, array, while
-- 6: object, public, throws, module, scheme, import, string, double, return, forall 
+- 6: object, public, throws, module, scheme, import, double, return, forall 
 - 7: private, default, integer, defined, newtype, receive, extends, boolean 
-- 8: function, property, continue, 
-- 9: protected, 
+- 8: function, property, continue
+- 9: protected
 - 0: instanceof, implements  
 
 - "val xs = 'A' :: 'B' :: 'C' :: Nil"
