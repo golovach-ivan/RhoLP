@@ -48,6 +48,7 @@ ERROR
   Line/Column: [1, 47]
   ----------
   type T = Functor[({ type λ[α] = Map[Int, α] })#λ]
+                                                ^
 ```
 
 ## Main classes
