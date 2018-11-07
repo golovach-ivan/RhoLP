@@ -26,123 +26,147 @@
 package net.golovach.rholp;
 
 
-import java.util.HashMap;
-import java.util.Map;
+import static net.golovach.rholp.RhoTokenType.TokenGroup.*;
+import static net.golovach.rholp.RhoTokenType.TokenGroup.Identifier;
+import static net.golovach.rholp.RhoTokenType.TokenGroup.Literal;
 
-/** An interface that defines codes for Java source tokens
- *  returned from lexical analysis.
- *
- *  https://github.com/rchain/rchain/blob/dev/rholang/src/main/bnfc/rholang_mercury.cf
+/**
+ * An interface that defines codes for Java source tokens
+ * returned from lexical analysis.
+ * <p/>
+ * https://github.com/rchain/rchain/blob/dev/rholang/src/main/bnfc/rholang_mercury.cf
  */
 public enum RhoTokenType {
-    EOF,
-    ERROR,
-    IDENT,
-    LITERAL_INT,
-    LITERAL_STRING,
-    LITERAL_URI,    
+
+    EOF("<EOF>", Dummy),
+
+    ERROR(Dummy),
+    IDENT(Identifier),
+    LITERAL_INT(Literal),
+    LITERAL_STRING(Literal),
+    LITERAL_URI(Literal),
 
     // === Keywords
-    IF("if"),
-    ELSE("else"),
-    MATCH("match"),
-    MATCHES("matches"),
-    SELECT("select"),
-    FOR("for"),
-    NEW("new"),
-    IN("in"),
-    CONTRACT("contract"),
+    IF("if", Keyword),
+    ELSE("else", Keyword),
+    MATCH("match", Keyword),
+    MATCHES("matches", Keyword),
+    SELECT("select", Keyword),
+    FOR("for", Keyword),
+    NEW("new", Keyword),
+    IN("in", Keyword),
+    CONTRACT("contract", Keyword),
 
-    NOT("not"),
-    AND("and"),
-    OR("or"),
+    NOT("not", Keyword),
+    AND("and", Keyword),
+    OR("or", Keyword),
 
-    BUNDLE_READ_WRITE("bundle"),  //todo: test lexer
-    BUNDLE_WRITE("bundle+"),
-    BUNDLE_READ("bundle-"),
-    BUNDLE_EQUIV("bundle0"),
+    BUNDLE("bundle", Keyword),
+    BUNDLE_PLUS("bundle+", Keyword),
+    BUNDLE_MINUS("bundle-", Keyword),
+    BUNDLE_ZERO("bundle0", Keyword),
 
     // === Literals
-    TRUE("true"),
-    FALSE("false"),
-    NIL("Nil"),
+    TRUE("true", Keyword),
+    FALSE("false", Keyword),
+    NIL("Nil", Keyword),
 
     // === Simple Types
-    BOOL("Bool"),
-    INT("Int"),
-    STRING("String"),
-    URI("Uri"),
-    BYTEARRAY("ByteArray"),
+    BOOL("Bool", Keyword),
+    INT("Int", Keyword),
+    STRING("String", Keyword),
+    URI("Uri", Keyword),
+    BYTE_ARRAY("ByteArray", Keyword),
 
     // === Compound Types
-    SET("Set"),
+    SET("Set", Keyword),
 
     // === Separators (punctuators)
-    LPAREN("("),
-    RPAREN(")"),
-    LBRACE("{"),
-    RBRACE("}"),
-    LBRACKET("["),
-    RBRACKET("]"),
-    COMMA(","),
-    SEMI(";"),
-    DOT("."),
-    COLON(":"),
-    ELLIPSIS("..."), // todo: separator or operator?
+    LPAREN("(", Separator),
+    RPAREN(")", Separator),
+    LBRACE("{", Separator),
+    RBRACE("}", Separator),
+    LBRACKET("[", Separator),
+    RBRACKET("]", Separator),
+    COMMA(",", Separator),
+    SEMI(";", Separator),
+    DOT(".", Separator),
+    COLON(":", Separator),
+    ELLIPSIS("...", Separator),
 
     // === Operators
-    PERCENT_PERCENT("%%"),
+    PERCENT_PERCENT("%%", Operator),
 
-    TILDE("~"),      // todo: PNegation?
-    CONJUNCTION("/\\"),
-    DISJUNCTION("\\/"),
+    TILDE("~", Operator),
+    CONJUNCTION("/\\", Operator),
+    DISJUNCTION("\\/", Operator),
 
-    PLUS("+"),
-    MINUS("-"),
-    STAR("*"), // todo: PMult OR PEval
-    DIV("/"),
-    PLUS_PLUS("++"),
-    MINUS_MINUS("--"),
-    GT(">"),
-    LT("<"),
-    EQ("="),
-    EQ_EQ("=="),
-    NOT_EQ("!="),
-    LTE("<="),
-    GTE(">="),
+    PLUS("+", Operator),
+    MINUS("-", Operator),
+    STAR("*", Operator),
+    DIV("/", Operator),
+    PLUS_PLUS("++", Operator),
+    MINUS_MINUS("--", Operator),
+    GT(">", Operator),
+    LT("<", Operator),
+    EQ("=", Operator),
+    EQ_EQ("==", Operator),
+    NOT_EQ("!=", Operator),
+    GT_EQ(">=", Operator),
 
-    PAR("|"),
-    WILDCARD("_"),
-    QUOTE("@"),
+    PAR("|", Operator),
+    WILDCARD("_", Operator), //todo: operator?
+    QUOTE("@", Operator),
 
-    BIND_LINEAR("<-"),
-    BIND_REPEATED("<="),
-    SEND_SINGLE("!"),
-    SEND_MULTIPLE("!!"),
-    ARROW("=>"); // todo: BRANCH OR CASE
+    BIND_LINEAR("<-", Operator),
+    SEND_SINGLE("!", Operator),
+    SEND_MULTIPLE("!!", Operator),
+    ARROW("=>", Operator),
+    BACK_ARROW("<=", Operator); // LT_EQ, BIND_REPEATED
 
-    RhoTokenType() {
-        this(null);
+    public final RhoToken T;
+    public final TokenGroup group;
+
+    private RhoTokenType(TokenGroup group) {
+        this.T = null;
+        this.group = group;
     }
-    RhoTokenType(String name) {
-        this.name = name;
+
+    private RhoTokenType(String chars, TokenGroup group) {
+        this.T = new RhoToken(this, chars);
+        this.group = group;
     }
 
-    public final String name;
-    
-    private static final Map<String, RhoTokenType> map = new HashMap<>();
-    static {
-        for (RhoTokenType tokenType: values()) {
-            if (tokenType.name != null) {
-                map.put(tokenType.name, tokenType);
+    public RhoToken token() {
+        return T;
+    }
+
+    public RhoToken token(String chars) {
+        if (this.T == null) {
+            return new RhoToken(this, chars);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Alias for {@link RhoTokenType#token()}
+     */
+    public RhoToken T(String chars) {
+        return token(chars);
+    }
+
+    public static RhoToken keywordOrIdent(String val) {
+        // linear scan for constants
+        for (RhoTokenType type : values()) {
+            if (type.token() != null && type.token().val.equals(val)) {
+                return type.token();
             }
         }
+        return IDENT.token(val);
     }
-    public static RhoTokenType select(String body) {
-        if (map.containsKey(body)) {
-            return map.get(body);
-        } else {
-            return IDENT; //todo:
-        }
-    }
+
+    public enum TokenGroup {
+        Keyword, Operator, Separator, Literal, Identifier, Dummy
+    };
 }

@@ -1,5 +1,9 @@
 package net.golovach.rholp.log;
 
+import static net.golovach.rholp.log.Diagnostic.Kind.ERROR;
+import static net.golovach.rholp.log.Diagnostic.Kind.NOTE;
+import static net.golovach.rholp.log.Diagnostic.Kind.WARN;
+
 /**
  * Class for diagnostics from lexer/parser. A diagnostic reports
  * a problem at a specific position in a source file.
@@ -13,34 +17,125 @@ package net.golovach.rholp.log;
  * <p> Variation of {@link javax.tools.Diagnostic}.
  */
 public class Diagnostic {
+    // todo: implement scala API (case class) + javadoc: convert java->scala collections
     private final Kind kind;
-    private final String line;
-    private final int startPosFile;
-    private final int startPosLine;
-    private final int len;
-    private final int lineNumber;
-    private final int columnNumber;
     private final String code;
-    private final String message;
+    private final String[] messages;
+    private final String messageTemplate;
+    private final String[] messageArgs;
+    //
+    private final String line;
+    private final int colNum;
+    private final int len;
+    //
+    private final int rowNum;
+    private final int offset;
+
 
     public Diagnostic(Kind kind,
-                      String line,
-                      int startPosFile,
-                      int startPosLine,
-                      int len,
-                      int lineNumber,
-                      int columnNumber,
                       String code,
-                      String message) {
+                      String[] messages,
+                      String messageTemplate,
+                      String[] messageArgs,
+                      //
+                      String line,
+                      int colNum,
+                      int len,
+                      //
+                      int offset,
+                      int rowNum
+    ) {
         this.kind = kind;
-        this.line = line;
-        this.startPosFile = startPosFile;
-        this.startPosLine = startPosLine;
-        this.len = len;
-        this.lineNumber = lineNumber;
-        this.columnNumber = columnNumber;
         this.code = code;
-        this.message = message;
+        this.messages = messages;
+        this.messageTemplate = messageTemplate;
+        this.messageArgs = messageArgs;
+        //
+        this.line = line;
+        this.colNum = colNum;
+        this.len = len;
+        //
+        this.offset = offset;
+        this.rowNum = rowNum;
+
+    }
+
+    public static Diagnostic note(String code,
+                                  String[] messages,
+                                  String messageTemplate,
+                                  String[] messageArgs,
+                                  //
+                                  String line,
+                                  int colNum,
+                                  int len,
+                                  //
+                                  int offset,
+                                  int rowNum) {
+        return new Diagnostic(
+                NOTE,
+                code,
+                messages,
+                messageTemplate,
+                messageArgs,
+                //
+                line,
+                colNum,
+                len,
+                //
+                offset,
+                rowNum);
+    }
+
+    public static Diagnostic warn(String code,
+                                   String[] messages,
+                                   String messageTemplate,
+                                   String[] messageArgs,
+                                   //
+                                   String line,
+                                   int colNum,
+                                   int len,
+                                   //
+                                   int offset,
+                                   int rowNum) {
+        return new Diagnostic(
+                WARN,
+                code,
+                messages,
+                messageTemplate,
+                messageArgs,
+                //
+                line,
+                colNum,
+                len,
+                //
+                offset,
+                rowNum);
+    }
+
+    public static Diagnostic error(String code,
+                                   String[] messages,
+                                   String messageTemplate,
+                                   String[] messageArgs,
+                                   //
+                                   String line,
+                                   int colNum,
+                                   int len,
+                                   //
+                                   int offset,
+                                   int rowNum) {
+        return new Diagnostic(
+                ERROR,
+                code,
+                messages,
+                messageTemplate,
+                messageArgs,
+                //
+                line,
+                colNum,
+                len,
+                //
+                offset,
+                rowNum);
     }
 
     /**
@@ -72,6 +167,23 @@ public class Diagnostic {
         return kind;
     }
 
+    public String getCode() {
+        return code;
+    }
+
+    // todo: message[s] ?
+    public String[] getMessage() {
+        return messages;
+    }
+
+    public String getMessageTemplate() {
+        return messageTemplate;
+    }
+
+    public String[] getMessageArgs() {
+        return messageArgs;
+    }
+
     /**
      * Gets the source code line with problem.
      *
@@ -81,53 +193,19 @@ public class Diagnostic {
         return line;
     }
 
-    public int getStartPosFile() {
-        return startPosFile;
-    }
-
-    public int getStartPosLine() {
-        return startPosLine;
+    public int getColNum() {
+        return colNum;
     }
 
     public int getLen() {
         return len;
     }
 
-    /**
-     * Gets the line number of the character offset returned by
-     * {@linkplain #getStartPosition()}. Indexing start with 1.
-     *
-     * @return a line number of problem
-     */
-    public int getLineNumber() {
-        return lineNumber;
+    public int getOffset() {
+        return offset;
     }
 
-    /**
-     * Gets the column number of the character offset returned by
-     * {@linkplain #getStartPosition()}. Indexing start with 1.
-     *
-     * @return a column number of problem
-     */
-    public int getColumnNumber() {
-        return columnNumber;
-    }
-
-    /**
-     * Gets a diagnostic code indicating the type of diagnostic.
-     *
-     * @return a diagnostic code
-     */
-    public String getCode() {
-        return code;
-    }
-
-    /**
-     * Gets a diagnostic message.
-     *
-     * @return a diagnostic message
-     */
-    public String getMessage() {
-        return message;
+    public int getRowNum() {
+        return rowNum;
     }
 }
