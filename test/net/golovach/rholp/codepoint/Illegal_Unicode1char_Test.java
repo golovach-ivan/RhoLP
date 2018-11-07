@@ -26,7 +26,7 @@ public class Illegal_Unicode1char_Test {
         List<RhoToken> tokens = tokenize("α", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("α"), EOF.token())));
+                ERROR.T("α"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("α").row(1).len(1).col(1).offset(0)
@@ -39,7 +39,7 @@ public class Illegal_Unicode1char_Test {
         List<RhoToken> tokens = tokenize("αβ", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("α"), ERROR.token("β"), EOF.token())));
+                ERROR.T("α"), ERROR.T("β"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("αβ").row(1).len(1).col(1).offset(0),
@@ -53,7 +53,7 @@ public class Illegal_Unicode1char_Test {
         List<RhoToken> tokens = tokenize("α β", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("α"), ERROR.token("β"), EOF.token())));
+                ERROR.T("α"), ERROR.T("β"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("α β").row(1).len(1).col(1).offset(0),
@@ -67,9 +67,9 @@ public class Illegal_Unicode1char_Test {
         List<RhoToken> tokens = tokenize("α\nβγ\r\nδϵζ\n\n", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("α"), ERROR.token("β"), ERROR.token("γ"),
-                ERROR.token("δ"), ERROR.token("ϵ"), ERROR.token("ζ"),
-                EOF.token())));
+                ERROR.T("α"), ERROR.T("β"), ERROR.T("γ"),
+                ERROR.T("δ"), ERROR.T("ϵ"), ERROR.T("ζ"),
+                EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("α\n").row(1).len(1).col(1).offset(0),

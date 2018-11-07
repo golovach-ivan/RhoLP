@@ -137,11 +137,7 @@ public enum RhoTokenType {
         this.group = group;
     }
 
-    public RhoToken token() {
-        return T;
-    }
-
-    public RhoToken token(String chars) {
+    public RhoToken T(String chars) {
         if (this.T == null) {
             return new RhoToken(this, chars);
         } else {
@@ -149,21 +145,14 @@ public enum RhoTokenType {
         }
     }
 
-    /**
-     * Alias for {@link RhoTokenType#token()}
-     */
-    public RhoToken T(String chars) {
-        return token(chars);
-    }
-
     public static RhoToken keywordOrIdent(String val) {
         // linear scan for constants
         for (RhoTokenType type : values()) {
-            if (type.token() != null && type.token().val.equals(val)) {
-                return type.token();
+            if (type.T != null && type.T.val.equals(val)) {
+                return type.T;
             }
         }
-        return IDENT.token(val);
+        return IDENT.T(val);
     }
 
     public enum TokenGroup {

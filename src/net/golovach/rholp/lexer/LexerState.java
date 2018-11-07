@@ -130,9 +130,9 @@ public class LexerState {
                 lineMap.offsetToRow(offset - mem.length())));
 
         if (mem.length() == 1 && mem.charAt(0) < ' ') {
-            return RhoTokenType.ERROR.token(format("\\u%04X", (int) mem.charAt(0)));
+            return RhoTokenType.ERROR.T(format("\\u%04X", (int) mem.charAt(0)));
         } else {
-            return RhoTokenType.ERROR.token(mem);
+            return RhoTokenType.ERROR.T(mem);
         }
     }
 }

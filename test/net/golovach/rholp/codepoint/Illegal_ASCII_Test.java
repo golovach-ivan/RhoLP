@@ -26,7 +26,7 @@ public class Illegal_ASCII_Test {
         List<RhoToken> tokens = tokenize("\u0000", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("\\u0000"), EOF.token())));
+                ERROR.T("\\u0000"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("\u0000").row(1).len(1).col(1).offset(0)
@@ -39,7 +39,7 @@ public class Illegal_ASCII_Test {
         List<RhoToken> tokens = tokenize("\u0000\u0001", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("\\u0000"), ERROR.token("\\u0001"), EOF.token())));
+                ERROR.T("\\u0000"), ERROR.T("\\u0001"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("\u0000\u0001").row(1).len(1).col(1).offset(0),
@@ -53,7 +53,7 @@ public class Illegal_ASCII_Test {
         List<RhoToken> tokens = tokenize("\u0000 \u0001", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("\\u0000"), ERROR.token("\\u0001"), EOF.token())));
+                ERROR.T("\\u0000"), ERROR.T("\\u0001"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("\u0000 \u0001").row(1).len(1).col(1).offset(0),
@@ -86,26 +86,26 @@ public class Illegal_ASCII_Test {
                 "", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.token("\\u0000"), ERROR.token("\\u0001"),
-                ERROR.token("\\u0002"), ERROR.token("\\u0003"),
-                ERROR.token("\\u0004"), ERROR.token("\\u0005"),
-                ERROR.token("\\u0006"), ERROR.token("\\u0007"),
-                ERROR.token("\\u0008"),
-//                ERROR.token("\t"),
-//                ERROR.token("\n"),
-                ERROR.token("\\u000B"),
-//                ERROR.token("\f"),
-//                ERROR.token("\r"),
-                ERROR.token("\\u000E"), ERROR.token("\\u000F"),
-                ERROR.token("\\u0010"), ERROR.token("\\u0011"),
-                ERROR.token("\\u0012"), ERROR.token("\\u0013"),
-                ERROR.token("\\u0014"), ERROR.token("\\u0015"),
-                ERROR.token("\\u0016"), ERROR.token("\\u0017"),
-                ERROR.token("\\u0018"), ERROR.token("\\u0019"),
-                ERROR.token("\\u001A"), ERROR.token("\\u001B"),
-                ERROR.token("\\u001C"), ERROR.token("\\u001D"),
-                ERROR.token("\\u001E"), ERROR.token("\\u001F"),
-                EOF.token())));
+                ERROR.T("\\u0000"), ERROR.T("\\u0001"),
+                ERROR.T("\\u0002"), ERROR.T("\\u0003"),
+                ERROR.T("\\u0004"), ERROR.T("\\u0005"),
+                ERROR.T("\\u0006"), ERROR.T("\\u0007"),
+                ERROR.T("\\u0008"),
+//                ERROR.T("\t"),
+//                ERROR.T("\n"),
+                ERROR.T("\\u000B"),
+//                ERROR.T("\f"),
+//                ERROR.T("\r"),
+                ERROR.T("\\u000E"), ERROR.T("\\u000F"),
+                ERROR.T("\\u0010"), ERROR.T("\\u0011"),
+                ERROR.T("\\u0012"), ERROR.T("\\u0013"),
+                ERROR.T("\\u0014"), ERROR.T("\\u0015"),
+                ERROR.T("\\u0016"), ERROR.T("\\u0017"),
+                ERROR.T("\\u0018"), ERROR.T("\\u0019"),
+                ERROR.T("\\u001A"), ERROR.T("\\u001B"),
+                ERROR.T("\\u001C"), ERROR.T("\\u001D"),
+                ERROR.T("\\u001E"), ERROR.T("\\u001F"),
+                EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).row(1).len(1).col(1).offset(0),

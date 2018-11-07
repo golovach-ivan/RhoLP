@@ -1,8 +1,16 @@
 package net.golovach.rholp.lexer.demo;
 
+import net.golovach.rholp.RhoToken;
+import net.golovach.rholp.RhoTokenType;
 import net.golovach.rholp.lexer.RhoLexer;
 import net.golovach.rholp.log.DiagnosticListener;
 import net.golovach.rholp.log.impl.GroupedPrinter;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static net.golovach.rholp.RhoTokenType.*;
 
 public class RhoLexerDemo_scala {
 
@@ -60,8 +68,8 @@ public class RhoLexerDemo_scala {
     public static void main(String[] args) {
 
         DiagnosticListener listener = new GroupedPrinter(System.out);
-        RhoLexer lexer = new RhoLexer("$ as As OR class type", listener);
+        RhoLexer lexer = new RhoLexer(content0, listener);
 
-        lexer.readAll();
+        List<RhoToken> tokens = lexer.readAll();
     }
 }

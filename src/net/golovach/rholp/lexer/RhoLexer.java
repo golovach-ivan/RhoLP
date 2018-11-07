@@ -70,7 +70,7 @@ public class RhoLexer {
 
             if (state.isEOF()) {
                 listener.eof();
-                return EOF.token();
+                return EOF.T;
             }
 
             if (state.isLetter()) {
@@ -95,31 +95,31 @@ public class RhoLexer {
                 // ============================== Separators: (, ), [, ], {, }
                 case '(':
                     skipChar();
-                    return LPAREN.token();
+                    return LPAREN.T;
                 case ')':
                     skipChar();
-                    return RPAREN.token();
+                    return RPAREN.T;
                 case '[':
                     skipChar();
-                    return LBRACKET.token();
+                    return LBRACKET.T;
                 case ']':
                     skipChar();
-                    return RBRACKET.token();
+                    return RBRACKET.T;
                 case '{':
                     skipChar();
-                    return LBRACE.token();
+                    return LBRACE.T;
                 case '}':
                     skipChar();
-                    return RBRACE.token();
+                    return RBRACE.T;
                 // ============================== Separators: . , ; : =
                 case '.':
                     return processDot();
                 case ',':
                     skipChar();
-                    return COMMA.token();
+                    return COMMA.T;
                 case ';':
                     skipChar();
-                    return SEMI.token();
+                    return SEMI.T;
                 case ':':
                     return processColon();
                 case '=':
@@ -150,7 +150,7 @@ public class RhoLexer {
                     return processTilde();
                 case '@':
                     skipChar();
-                    return QUOTE.token();
+                    return QUOTE.T;
                 // ============================== Operators (unused): &, %, ^, ?, #, $
                 case '&':
                     return processAmp();
@@ -349,7 +349,7 @@ public class RhoLexer {
             memChar();
             return state.lexError("operator.absent", "::");
         } else { //                 ':'
-            return COLON.token();
+            return COLON.T;
         }
     }
 
@@ -361,13 +361,13 @@ public class RhoLexer {
                 memChar();
                 return state.lexError("operator.absent.eq");
             } else {                                   // '=='
-                return EQ_EQ.token();
+                return EQ_EQ.T;
             }
         } else if (!state.isEOF() && state.ch() == '>') { // '=>'
             skipChar();
-            return ARROW.token();
+            return ARROW.T;
         } else {                        // '='
-            return EQ.token();
+            return EQ.T;
         }
     }
 
@@ -379,7 +379,7 @@ public class RhoLexer {
             }
             return keywordOrIdent(state.mem);
         } else {
-            return WILDCARD.token();
+            return WILDCARD.T;
         }
     }
 
@@ -388,12 +388,12 @@ public class RhoLexer {
         memChar();
         if (!state.isEOF() && state.ch() == '+') {        // '++'
             skipChar();
-            return PLUS_PLUS.token();
+            return PLUS_PLUS.T;
         } else if (!state.isEOF() && state.ch() == '=') { // '+='
             memChar();
             return state.lexError("operator.absent.compound-assignment");
         } else {                        // '+'
-            return PLUS.token();
+            return PLUS.T;
         }
     }
 
@@ -401,7 +401,7 @@ public class RhoLexer {
         memChar();
         if (!state.isEOF() && state.ch() == '-') {        // '--'
             skipChar();
-            return MINUS_MINUS.token();
+            return MINUS_MINUS.T;
         } else if (!state.isEOF() && state.ch() == '=') { // '-='
             memChar();
             return state.lexError("operator.absent.compound-assignment");
@@ -409,7 +409,7 @@ public class RhoLexer {
             memChar();
             return state.lexError("operator.absent.arrow");
         } else {                        // '-'
-            return MINUS.token();
+            return MINUS.T;
         }
     }
 
@@ -422,7 +422,7 @@ public class RhoLexer {
             memChar();
             return state.lexError("operator.absent.compound-assignment");
         } else {                        // '-'
-            return STAR.token();
+            return STAR.T;
         }
     }
 
@@ -430,7 +430,7 @@ public class RhoLexer {
         memChar();
         if (!state.isEOF() && state.ch() == '\\') {       // '/\'
             skipChar();
-            return CONJUNCTION.token();
+            return CONJUNCTION.T;
         } else if (!state.isEOF() && state.ch() == '/') { // '//'
             skipChar();
             return processCommentLine();
@@ -438,7 +438,7 @@ public class RhoLexer {
             memChar();
             return processCommentBlock();
         } else {                                          // '/'
-            return DIV.token();
+            return DIV.T;
         }
     }
 
@@ -472,7 +472,7 @@ public class RhoLexer {
         memChar();
         if (!state.isEOF() && state.ch() == '/') { // '\/'
             skipChar();
-            return DISJUNCTION.token();
+            return DISJUNCTION.T;
         } else { //                 '\'
             return state.lexError("operator.absent.back-slash");
         }
@@ -488,9 +488,9 @@ public class RhoLexer {
             return state.lexError("operator.absent.arrow");
         } else if (!state.isEOF() && state.ch() == '=') { // '<='
             skipChar();
-            return BACK_ARROW.token();
+            return BACK_ARROW.T;
         } else { //                 '<'
-            return LT.token();
+            return LT.T;
         }
     }
 
@@ -506,9 +506,9 @@ public class RhoLexer {
             }
         } else if (!state.isEOF() && state.ch() == '=') { // '>='
             skipChar();
-            return GT_EQ.token();
+            return GT_EQ.T;
         } else {                                          // '>'
-            return GT.token();
+            return GT.T;
         }
     }
 
@@ -518,7 +518,7 @@ public class RhoLexer {
             memChar();
             return state.lexError("operator.absent.logic");
         } else { //                 '|'
-            return PAR.token();
+            return PAR.T;
         }
     }
 
@@ -526,12 +526,12 @@ public class RhoLexer {
         skipChar();
         if (!state.isEOF() && state.ch() == '!') { // '!!'
             skipChar();
-            return SEND_MULTIPLE.token();
+            return SEND_MULTIPLE.T;
         } else if (!state.isEOF() && state.ch() == '=') { // '!='
             skipChar();
-            return NOT_EQ.token();
+            return NOT_EQ.T;
         } else { //                 '!'
-            return SEND_SINGLE.token();
+            return SEND_SINGLE.T;
         }
     }
 
@@ -541,7 +541,7 @@ public class RhoLexer {
             memChar();
             return state.lexError("operator.absent.arrow");
         } else { //                 '~'
-            return TILDE.token();
+            return TILDE.T;
         }
     }
 
@@ -549,7 +549,7 @@ public class RhoLexer {
         memChar();
         if (!state.isEOF() && state.ch() == '%') { // '%%'
             skipChar();
-            return PERCENT_PERCENT.token();
+            return PERCENT_PERCENT.T;
         } else { //                 '%'
             return state.lexError("operator.absent.arithmetic");
         }
@@ -615,7 +615,7 @@ public class RhoLexer {
         }
         if (!state.isEOF() && state.ch() == '"') {
             memChar();
-            return LITERAL_STRING.token(state.mem.substring(1, state.mem.length() - 1));
+            return LITERAL_STRING.T(state.mem.substring(1, state.mem.length() - 1));
         } else {
             return state.lexError("literal.string.unclosed");
         }
