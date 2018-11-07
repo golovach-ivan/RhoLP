@@ -3,7 +3,10 @@ package net.golovach.rholp.log.impl;
 import net.golovach.rholp.log.LineMap;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.binarySearch;
 
 public class LineMapImpl implements LineMap {
     // start position of each line
@@ -32,33 +35,19 @@ public class LineMapImpl implements LineMap {
 
     @Override
     public int offsetToRow(int offset) {
-        // todo: use standard binary search
-        int low = 0;
-        int high = startPositions.size() - 1;
-        while (low <= high) {
-            int mid = (low + high) >> 1;
-            int midVal = startPositions.get(mid);
-
-            if (midVal < offset)
-                low = mid + 1;
-            else if (midVal > offset)
-                high = mid - 1;
-            else {
-                return mid + 1;
-            }
-        }
-        return low;
+        int index = binarySearch(startPositions, offset) + 1;
+        return (index > 0) ? index : - index;
     }
 
     @Override
     public int offsetToCol(int offset) {
-        return offset - startPositions.get(offsetToRow(offset) - FIRST_ROW) + FIRST_COL;
+        return offset - startPositions.get(offsetToRow(offset) - 1) + 1;
     }
 
     @Override
     public String offsetToSrcLine(int offset) {
         int rowNum = offsetToRow(offset);
-        int start = startPositions.get(rowNum - FIRST_ROW);
+        int start = startPositions.get(rowNum - 1);
         if (rowNum < startPositions.size()) {
             int end = startPositions.get(rowNum);
             return src.substring(start, end);

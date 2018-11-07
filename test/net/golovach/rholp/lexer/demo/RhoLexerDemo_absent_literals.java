@@ -2,9 +2,7 @@ package net.golovach.rholp.lexer.demo;
 
 import net.golovach.rholp.lexer.RhoLexer;
 import net.golovach.rholp.log.DiagnosticListener;
-import net.golovach.rholp.log.MessageDB;
-import net.golovach.rholp.log.impl.CollapsedPrinter;
-import net.golovach.rholp.log.impl.MessageDBImpl;
+import net.golovach.rholp.log.impl.GroupedPrinter;
 
 import static java.util.ResourceBundle.getBundle;
 
@@ -17,7 +15,7 @@ public class RhoLexerDemo_absent_literals {
 
     public static void main(String[] args) {
 
-        DiagnosticListener listener = new CollapsedPrinter(System.out);
+        DiagnosticListener listener = new GroupedPrinter(System.out);
         RhoLexer lexer = new RhoLexer(content, listener);
 
         lexer.readAll();

@@ -2,7 +2,7 @@ package net.golovach.rholp.lexer.demo;
 
 import net.golovach.rholp.lexer.RhoLexer;
 import net.golovach.rholp.log.DiagnosticListener;
-import net.golovach.rholp.log.impl.CollapsedPrinter;
+import net.golovach.rholp.log.impl.GroupedPrinter;
 
 public class RhoLexerDemo_scala {
 
@@ -59,8 +59,8 @@ public class RhoLexerDemo_scala {
 
     public static void main(String[] args) {
 
-        DiagnosticListener listener = new CollapsedPrinter(System.out);
-        RhoLexer lexer = new RhoLexer(content0, listener);
+        DiagnosticListener listener = new GroupedPrinter(System.out);
+        RhoLexer lexer = new RhoLexer("$ as As OR class type", listener);
 
         lexer.readAll();
     }

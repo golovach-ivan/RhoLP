@@ -1,30 +1,23 @@
 package net.golovach.rholp.lexer;
 
-import net.golovach.rholp.log.impl.LineMapImpl;
 import net.golovach.rholp.RhoToken;
 import net.golovach.rholp.log.DiagnosticListener;
+import net.golovach.rholp.log.impl.LineMapImpl;
 import net.golovach.rholp.log.impl.NopListener;
-import net.golovach.rholp.log.MessageDB;
-import net.golovach.rholp.log.impl.MessageDBImpl;
-import net.golovach.rholp.note.KeywordAbsent;
-import net.golovach.rholp.warn.KeywordTypo;
+import net.golovach.rholp.msg.AbsentKeywords;
+import net.golovach.rholp.msg.MisspelledKeywords;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 import static java.lang.Character.*;
 import static java.lang.String.format;
-import static java.util.ResourceBundle.getBundle;
 import static net.golovach.rholp.RhoTokenType.*;
 
 public class RhoLexer {
-    public static final String NOTE_PREFIX = "lexer.note.";
-    public static final String WARN_PREFIX = "lexer.warn.";
-    public static final String ERROR_PREFIX = "lexer.err.";
-    //
-    public static final String MSG_DB = "lexer";
+    public static final String FILE_LEXER_NOTES = "/lexer-notes.properties";
+    public static final String FILE_LEXER_WARNS = "/lexer-warns.properties";
+    public static final String FILE_LEXER_ERRORS = "/lexer-errors.properties";
 
     private final Deque<RhoToken> returnedTokens = new ArrayDeque<>();
     private final DiagnosticListener listener;
@@ -35,12 +28,34 @@ public class RhoLexer {
     }
 
     public RhoLexer(String content, DiagnosticListener listener) {
-        this(content, listener, new MessageDBImpl(getBundle("lexer")));
+        this.listener = listener;
+        this.state = new LexerState(content, listener, new LineMapImpl(content), loadDefaultMessages());
     }
 
-    public RhoLexer(String content, DiagnosticListener listener, MessageDB messageDb) {
+    public RhoLexer(String content, DiagnosticListener listener, Properties messages) {
         this.listener = listener;
-        this.state = new LexerState(content, listener, new LineMapImpl(content), messageDb);
+        this.state = new LexerState(content, listener, new LineMapImpl(content), messages);
+    }
+
+    private Properties loadDefaultMessages() {
+        Properties notes = new Properties();
+        Properties warns = new Properties();
+        Properties errors = new Properties();
+        Properties result = new Properties();
+
+        try {
+            notes.load(getClass().getResourceAsStream(FILE_LEXER_NOTES));
+            warns.load(getClass().getResourceAsStream(FILE_LEXER_WARNS));
+            errors.load(getClass().getResourceAsStream(FILE_LEXER_ERRORS));
+
+            result.putAll(notes);
+            result.putAll(warns);
+            result.putAll(errors);
+
+            return result;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex); //todo: RuntimeException?
+        }
     }
 
     public RhoToken readToken() {
@@ -51,7 +66,7 @@ public class RhoLexer {
 
     private RhoToken readTokenImpl() {
         while (true) {
-            cleanMem();
+            state = state.cleanMem();
 
             if (state.isEOF()) {
                 listener.eof();
@@ -183,24 +198,22 @@ public class RhoLexer {
 
         // 'bundle0', 'bundle+', 'bundle-'
         if (!state.isEOF() && state.isOneOf('0', '+', '-') &&
-                state.mem().equals("bundle")) {
+                state.mem.equals("bundle")) {
             memChar();
-            return keywordOrIdent(state.mem());
+            return keywordOrIdent(state.mem);
         }
 
-        RhoToken result = keywordOrIdent(state.mem());
+        RhoToken result = keywordOrIdent(state.mem);
 
         // check: identifier like keyword (typo)
         if (result.type.group == TokenGroup.Identifier) {
-            String correct = KeywordTypo.tryCorrect(state.mem());
-            if (correct != null) {
-                state.lexWarn("identifier.like-existing-keyword", correct);
-            }
+            Optional<String> correct = MisspelledKeywords.tryCorrectMisspelled(state.mem);
+            correct.ifPresent(c -> state.lexWarn("identifier.like-existing-keyword", c));
         }
 
         // check: identifier like absent keyword (language misunderstanding)
         if (result.type.group == TokenGroup.Identifier) {
-            if (KeywordAbsent.contains(state.mem())) {
+            if (AbsentKeywords.contains(state.mem)) {
                 state.lexNote("identifier.like-absent-keyword");
             }
         }
@@ -245,15 +258,14 @@ public class RhoLexer {
             return state.lexError("literal.absent.floating-point");
         } else {
             try {
-                Long.parseLong(state.mem());
-                return LITERAL_INT.T(state.mem());
+                Long.parseLong(state.mem);
+                return LITERAL_INT.T(state.mem);
             } catch (NumberFormatException e) {
                 // Workaround for Long.MIN_VALUE
-                // todo: remember prev token
-                if ("9223372036854775808".equals(state.mem())
+                if ("9223372036854775808".equals(state.mem)
                         && !returnedTokens.isEmpty()
                         && returnedTokens.getLast() == MINUS.T) {
-                    return LITERAL_INT.T(state.mem());
+                    return LITERAL_INT.T(state.mem);
                 } else {
                     return state.lexError("literal.int-too-big");
                 }
@@ -365,7 +377,7 @@ public class RhoLexer {
             while (!state.isEOF() && (state.isLetter() || state.isDigit() || state.ch() == '_')) {
                 memChar();
             }
-            return keywordOrIdent(state.mem());
+            return keywordOrIdent(state.mem);
         } else {
             return WILDCARD.token();
         }
@@ -603,7 +615,7 @@ public class RhoLexer {
         }
         if (!state.isEOF() && state.ch() == '"') {
             memChar();
-            return LITERAL_STRING.token(state.mem().substring(1, state.mem().length() - 1));
+            return LITERAL_STRING.token(state.mem.substring(1, state.mem.length() - 1));
         } else {
             return state.lexError("literal.string.unclosed");
         }
@@ -616,7 +628,7 @@ public class RhoLexer {
         }
         if (!state.isEOF() && state.ch() == '`') {
             memChar();
-            return LITERAL_URI.T(state.mem().substring(1, state.mem().length() - 1));
+            return LITERAL_URI.T(state.mem.substring(1, state.mem.length() - 1));
         } else {
             return state.lexError("literal.uri.unclosed");
         }
@@ -639,8 +651,8 @@ public class RhoLexer {
     // ============================== Unicode + internals
     private RhoToken processDefault() {
         char ch0 = state.ch();
-        String codepoint0 = String.valueOf(ch0 + 0);
-        String hex0 = format("'\\u%04X'", ch0 + 0);
+        String codepoint0 = String.valueOf((int) ch0);
+        String hex0 = format("'\\u%04X'", (int) ch0);
         memChar();
 
         if (ch0 <= '\u0080') {
@@ -652,7 +664,7 @@ public class RhoLexer {
         } else if (isHighSurrogate(ch0)) {
             // todo: add state.isEOF() checking
             char ch1 = state.ch();
-            String hex01 = format("'\\u%04X\\u%04X'", ch0 + 0, ch1 + 0);
+            String hex01 = format("'\\u%04X\\u%04X'", (int) ch0, (int) ch1);
             skipChar();
             if (isLowSurrogate(ch1)) {
                 // ========== Correct but illegal 2-char Unicode
@@ -669,24 +681,12 @@ public class RhoLexer {
         }
     }
 
-    private void cleanMem() {
-        state = state.cleanMem();
-    }
-
     private void skipChar() {
-        state = state.nextClean(); //todo: clean?
+        state = state.skipChar();
     }
 
     private void memChar() {
-        state = state.nextMem();
-    }
-
-    private void pushbackMem() {
-        state = state.revertMem();
-    }
-
-    private void pushToMem(char c) {
-        state = state.pushToMem(c);
+        state = state.memChar();
     }
 }
 

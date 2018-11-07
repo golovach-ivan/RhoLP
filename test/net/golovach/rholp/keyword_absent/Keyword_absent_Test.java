@@ -15,9 +15,9 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static net.golovach.rholp.RhoTokenType.EOF;
 import static net.golovach.rholp.RhoTokenType.IDENT;
-import static net.golovach.rholp.AssertUtils.DiagnosticBuilder.note;
-import static net.golovach.rholp.AssertUtils.tokenize;
-import static net.golovach.rholp.AssertUtils.verify;
+import static net.golovach.rholp.LexerAssertUtils.DiagnosticBuilder.note;
+import static net.golovach.rholp.LexerAssertUtils.tokenize;
+import static net.golovach.rholp.LexerAssertUtils.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 

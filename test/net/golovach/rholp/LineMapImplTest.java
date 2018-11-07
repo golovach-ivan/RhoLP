@@ -1,5 +1,6 @@
 package net.golovach.rholp;
 
+import net.golovach.rholp.log.LineMap;
 import net.golovach.rholp.log.impl.LineMapImpl;
 import org.junit.Test;
 
@@ -8,10 +9,10 @@ import static org.hamcrest.Matchers.is;
 
 public class LineMapImplTest {
 
+    final LineMap lineMap = new LineMapImpl("0\n12\r\n345\n\n");
+
     @Test
     public void test_offsetToRow() {
-
-        LineMapImpl lineMap = new LineMapImpl("0\n12\r\n345\n\n");
 
         assertThat(lineMap.offsetToRow(0), is(1));
         assertThat(lineMap.offsetToRow(1), is(1));
@@ -29,8 +30,6 @@ public class LineMapImplTest {
     @Test
     public void test_offsetToCol() {
 
-        LineMapImpl lineMap = new LineMapImpl("0\n12\r\n345\n\n");
-
         assertThat(lineMap.offsetToCol(0), is(1));
         assertThat(lineMap.offsetToCol(1), is(2));
         assertThat(lineMap.offsetToCol(2), is(1));
@@ -46,8 +45,6 @@ public class LineMapImplTest {
 
     @Test
     public void test_offsetToSrcLine() {
-
-        LineMapImpl lineMap = new LineMapImpl("0\n12\r\n345\n\n");
 
         assertThat(lineMap.offsetToSrcLine(0), is("0\n"));
         assertThat(lineMap.offsetToSrcLine(1), is("0\n"));

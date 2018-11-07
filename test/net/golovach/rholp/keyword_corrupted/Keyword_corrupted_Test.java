@@ -8,15 +8,14 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static net.golovach.rholp.RhoTokenType.*;
-import static net.golovach.rholp.AssertUtils.DiagnosticBuilder.warn;
-import static net.golovach.rholp.AssertUtils.tokenize;
-import static net.golovach.rholp.AssertUtils.verify;
+import static net.golovach.rholp.LexerAssertUtils.DiagnosticBuilder.warn;
+import static net.golovach.rholp.LexerAssertUtils.tokenize;
+import static net.golovach.rholp.LexerAssertUtils.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;

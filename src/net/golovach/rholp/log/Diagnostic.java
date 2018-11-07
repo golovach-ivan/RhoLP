@@ -1,5 +1,7 @@
 package net.golovach.rholp.log;
 
+import java.util.List;
+
 import static net.golovach.rholp.log.Diagnostic.Kind.ERROR;
 import static net.golovach.rholp.log.Diagnostic.Kind.NOTE;
 import static net.golovach.rholp.log.Diagnostic.Kind.WARN;
@@ -17,53 +19,55 @@ import static net.golovach.rholp.log.Diagnostic.Kind.WARN;
  * <p> Variation of {@link javax.tools.Diagnostic}.
  */
 public class Diagnostic {
-    // todo: implement scala API (case class) + javadoc: convert java->scala collections
-    private final Kind kind;
-    private final String code;
-    private final String[] messages;
-    private final String messageTemplate;
-    private final String[] messageArgs;
+    public final Kind kind;
+    public final String code;
+    public final String msg;
+    public final String msgTemplate;
+    public final List<String> msgArgs;
     //
-    private final String line;
-    private final int colNum;
-    private final int len;
+    /**
+     * The source code line with problem.
+     */
+    public final String line;
+    public final int col;
+    public final int len;
     //
-    private final int rowNum;
-    private final int offset;
+    public final int row;
+    public final int offset;
 
 
     public Diagnostic(Kind kind,
                       String code,
-                      String[] messages,
-                      String messageTemplate,
-                      String[] messageArgs,
+                      String msg,
+                      String msgTemplate,
+                      List<String> msgArgs,
                       //
                       String line,
-                      int colNum,
+                      int col,
                       int len,
                       //
                       int offset,
-                      int rowNum
+                      int row
     ) {
         this.kind = kind;
         this.code = code;
-        this.messages = messages;
-        this.messageTemplate = messageTemplate;
-        this.messageArgs = messageArgs;
+        this.msg = msg;
+        this.msgTemplate = msgTemplate;
+        this.msgArgs = msgArgs;
         //
         this.line = line;
-        this.colNum = colNum;
+        this.col = col;
         this.len = len;
         //
         this.offset = offset;
-        this.rowNum = rowNum;
+        this.row = row;
 
     }
 
     public static Diagnostic note(String code,
-                                  String[] messages,
-                                  String messageTemplate,
-                                  String[] messageArgs,
+                                  String msg,
+                                  String msgTemplate,
+                                  List<String> msgArgs,
                                   //
                                   String line,
                                   int colNum,
@@ -74,9 +78,9 @@ public class Diagnostic {
         return new Diagnostic(
                 NOTE,
                 code,
-                messages,
-                messageTemplate,
-                messageArgs,
+                msg,
+                msgTemplate,
+                msgArgs,
                 //
                 line,
                 colNum,
@@ -87,22 +91,22 @@ public class Diagnostic {
     }
 
     public static Diagnostic warn(String code,
-                                   String[] messages,
-                                   String messageTemplate,
-                                   String[] messageArgs,
-                                   //
-                                   String line,
-                                   int colNum,
-                                   int len,
-                                   //
-                                   int offset,
-                                   int rowNum) {
+                                  String msg,
+                                  String msgTemplate,
+                                  List<String> msgArgs,
+                                  //
+                                  String line,
+                                  int colNum,
+                                  int len,
+                                  //
+                                  int offset,
+                                  int rowNum) {
         return new Diagnostic(
                 WARN,
                 code,
-                messages,
-                messageTemplate,
-                messageArgs,
+                msg,
+                msgTemplate,
+                msgArgs,
                 //
                 line,
                 colNum,
@@ -113,9 +117,9 @@ public class Diagnostic {
     }
 
     public static Diagnostic error(String code,
-                                   String[] messages,
-                                   String messageTemplate,
-                                   String[] messageArgs,
+                                   String msg,
+                                   String msgTemplate,
+                                   List<String> msgArgs,
                                    //
                                    String line,
                                    int colNum,
@@ -126,9 +130,9 @@ public class Diagnostic {
         return new Diagnostic(
                 ERROR,
                 code,
-                messages,
-                messageTemplate,
-                messageArgs,
+                msg,
+                msgTemplate,
+                msgArgs,
                 //
                 line,
                 colNum,
@@ -139,73 +143,21 @@ public class Diagnostic {
     }
 
     /**
-     * Kinds of diagnostics: ERROR, WARN, NOTE.
+     * Kinds of diagnostics: NOTE, WARN, ERROR.
      */
     public static enum Kind {
         /**
-         * Problem which prevents the tool's normal completion.
+         * Informative message from the tool.
          */
-        ERROR,
+        NOTE,
         /**
          * Problem which does not usually prevent the tool from
          * completing normally.
          */
         WARN,
         /**
-         * Informative message from the tool.
+         * Problem which prevents the tool's normal completion.
          */
-        NOTE
-    }
-
-    /**
-     * Gets the kind of this diagnostic, for example, error or
-     * warning.
-     *
-     * @return the kind of this diagnostic
-     */
-    public Kind getKind() {
-        return kind;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    // todo: message[s] ?
-    public String[] getMessage() {
-        return messages;
-    }
-
-    public String getMessageTemplate() {
-        return messageTemplate;
-    }
-
-    public String[] getMessageArgs() {
-        return messageArgs;
-    }
-
-    /**
-     * Gets the source code line with problem.
-     *
-     * @return source code line
-     */
-    public String getLine() {
-        return line;
-    }
-
-    public int getColNum() {
-        return colNum;
-    }
-
-    public int getLen() {
-        return len;
-    }
-
-    public int getOffset() {
-        return offset;
-    }
-
-    public int getRowNum() {
-        return rowNum;
+        ERROR,
     }
 }

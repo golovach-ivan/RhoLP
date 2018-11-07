@@ -93,6 +93,7 @@ public enum RhoTokenType {
     DOT(".", Separator),
     COLON(":", Separator),
     ELLIPSIS("...", Separator),
+    WILDCARD("_", Separator),
 
     // === Operators
     PERCENT_PERCENT("%%", Operator),
@@ -115,7 +116,6 @@ public enum RhoTokenType {
     GT_EQ(">=", Operator),
 
     PAR("|", Operator),
-    WILDCARD("_", Operator), //todo: operator?
     QUOTE("@", Operator),
 
     BIND_LINEAR("<-", Operator),

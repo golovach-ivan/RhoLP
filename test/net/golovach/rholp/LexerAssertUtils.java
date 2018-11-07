@@ -1,20 +1,15 @@
 package net.golovach.rholp;
 
-import net.golovach.rholp.RhoToken;
 import net.golovach.rholp.lexer.RhoLexer;
 import net.golovach.rholp.log.Diagnostic;
-import net.golovach.rholp.log.impl.DiagnosticCollector;
 import net.golovach.rholp.log.DiagnosticListener;
 
 import java.util.List;
 
-import static net.golovach.rholp.lexer.RhoLexer.NOTE_PREFIX;
-import static net.golovach.rholp.lexer.RhoLexer.WARN_PREFIX;
-import static net.golovach.rholp.lexer.RhoLexer.ERROR_PREFIX;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class AssertUtils {
+public class LexerAssertUtils {
 
     public static List<RhoToken> tokenize(String content, DiagnosticListener listener) {
         return new RhoLexer(content, listener).readAll();
@@ -40,42 +35,42 @@ public class AssertUtils {
 
                     // kind
                     if (expected.kind != null) {
-                        assertThat(actual.getKind(), is(expected.kind));
+                        assertThat(actual.kind, is(expected.kind));
                     }
 
                     // code
                     if (expected.code != null) {
-                        assertThat(actual.getCode(), is(expected.code));
+                        assertThat(actual.code, is(expected.code));
                     }
 
                     // msg
                     if (expected.msg != null) {
-                        assertThat(actual.getMessage()[0], is(expected.msg)); //todo: [0]
+                        assertThat(actual.msg, is(expected.msg));
                     }
 
                     // line
                     if (expected.line != null) {
-                        assertThat(actual.getLine(), is(expected.line));
+                        assertThat(actual.line, is(expected.line));
                     }
 
                     // row
                     if (expected.row != -1) {
-                        assertThat(actual.getRowNum(), is(expected.row));
+                        assertThat(actual.row, is(expected.row));
                     }
 
                     // len
                     if (expected.len != -1) {
-                        assertThat(actual.getLen(), is(expected.len));
+                        assertThat(actual.len, is(expected.len));
                     }
 
                     // col
                     if (expected.col != -1) {
-                        assertThat(actual.getColNum(), is(expected.col));
+                        assertThat(actual.col, is(expected.col));
                     }
 
                     // offset
                     if (expected.offset != -1) {
-                        assertThat(actual.getOffset(), is(expected.offset));
+                        assertThat(actual.offset, is(expected.offset));
                     }
                 }
             }
@@ -152,62 +147,6 @@ public class AssertUtils {
         public DiagnosticBuilder offset(int offset) {
             this.offset = offset;
             return this;
-        }
-
-        public void in(DiagnosticCollector collector) {
-            assertEq(collector, 0);
-        }
-
-        public void assertEq(DiagnosticCollector collector, int index) {
-            Diagnostic diagnostic = collector.getDiagnostics().get(index);
-
-            // kind
-            assertThat(diagnostic.getKind(), is(kind));
-
-            // code
-            switch (kind) {
-                case ERROR:
-                    assertThat(diagnostic.getCode(), is(ERROR_PREFIX + code));
-                    break;
-                case WARN:
-                    assertThat(diagnostic.getCode(), is(WARN_PREFIX + code));
-                    break;
-                case NOTE:
-                    assertThat(diagnostic.getCode(), is(NOTE_PREFIX + code));
-                    break;
-            }
-
-            if (msg != null) {
-                assertThat(diagnostic.getMessage()[0], is(msg));
-            }
-
-            if (msgArgs != null) {
-                assertThat(diagnostic.getMessageArgs(), is(msgArgs));
-            }
-
-            // line
-            if (line != null) {
-                assertThat(diagnostic.getLine(), is(line));
-            }
-
-            if (col != -1) {
-                assertThat(diagnostic.getColNum(), is(col));
-            }
-
-            // len
-            if (len != -1) {
-                assertThat(diagnostic.getLen(), is(len));
-            }
-
-            // offset
-            if (offset != -1) {
-                assertThat(diagnostic.getOffset(), is(offset));
-            }
-
-            // row
-            if (row != -1) {
-                assertThat(diagnostic.getRowNum(), is(row));
-            }
         }
     }
 }

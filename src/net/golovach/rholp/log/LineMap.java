@@ -15,8 +15,6 @@ package net.golovach.rholp.log;
  * <p/> Variation of {@link com.sun.source.tree.LineMap}
  */
 public interface LineMap {
-    public static final int FIRST_ROW = 1;
-    public static final int FIRST_COL = 1;
 
     /**
      * Find the line containing a position; a line termination
