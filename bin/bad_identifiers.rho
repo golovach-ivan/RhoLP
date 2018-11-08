@@ -1,0 +1,3 @@
+new type in {
+  type!(nil)
+}
