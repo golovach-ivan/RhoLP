@@ -1,0 +1,3 @@
+new chan in {
+	chan!(['A', α, `rho:io:stdout])
+}
