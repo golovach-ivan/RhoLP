@@ -1,4 +1,4 @@
-package net.golovach.rholp.codepoint;
+package net.golovach.rholp.default_section;
 
 import net.golovach.rholp.RhoToken;
 import net.golovach.rholp.log.impl.DiagnosticCollector;

@@ -37,7 +37,7 @@ public class Colon_Test {
         assertThat(tokens, is(asList(
                 ERROR.T("::"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.operator.absent")
+                error("lexer.err.operator.absent.colon-colon")
                         .line("::").row(1).col(1).len(2).offset(0)
         );
     }
@@ -50,7 +50,7 @@ public class Colon_Test {
         assertThat(tokens, is(asList(
                 ERROR.T("::"), COLON.T, EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.operator.absent")
+                error("lexer.err.operator.absent.colon-colon")
                         .line(":::").row(1).col(1).len(2).offset(0));
 
     }
@@ -63,9 +63,9 @@ public class Colon_Test {
         assertThat(tokens, is(asList(
                 ERROR.T("::"), ERROR.T("::"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.operator.absent")
+                error("lexer.err.operator.absent.colon-colon")
                         .line("::::").row(1).col(1).len(2).offset(0),
-                error("lexer.err.operator.absent")
+                error("lexer.err.operator.absent.colon-colon")
                         .line("::::").row(1).col(3).len(2).offset(2));
 
     }

@@ -17,6 +17,8 @@ import static org.hamcrest.Matchers.is;
 
 public class String_Test {
 
+    static final String ERR_CODE_STRING_UNCLOSED = "lexer.err.literal.string.unclosed";
+
     final DiagnosticCollector collector = new DiagnosticCollector();
 
     @Test
@@ -26,7 +28,7 @@ public class String_Test {
 
         assertThat(tokens, is(asList(ERROR.T("\""), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.literal.string.unclosed")
+                error(ERR_CODE_STRING_UNCLOSED)
                         .line("\"").row(1).col(1).len(1).offset(0));
     }
 
@@ -37,7 +39,7 @@ public class String_Test {
 
         assertThat(tokens, is(asList(IDENT.T("a"), ERROR.T("\""), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.literal.string.unclosed")
+                error(ERR_CODE_STRING_UNCLOSED)
                         .line("a\"").row(1).col(2).len(1).offset(1));
     }
 
@@ -48,7 +50,7 @@ public class String_Test {
 
         assertThat(tokens, is(asList(ERROR.T("\"a"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.literal.string.unclosed")
+                error(ERR_CODE_STRING_UNCLOSED)
                         .line("\"a").row(1).col(1).len(2).offset(0));
     }
 
@@ -59,7 +61,7 @@ public class String_Test {
 
         assertThat(tokens, is(asList(IDENT.T("a"), ERROR.T("\"b"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.literal.string.unclosed")
+                error(ERR_CODE_STRING_UNCLOSED)
                         .line("a\"b").row(1).col(2).len(2).offset(1));
     }
 
@@ -86,8 +88,39 @@ public class String_Test {
 
         List<RhoToken> tokens = tokenize("a\"b\"c", collector);
 
-        assertThat(tokens, is(asList(IDENT.T("a"), LITERAL_STRING.T("b"), IDENT.T("c"), EOF.T)));
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), LITERAL_STRING.T("b"), IDENT.T("c"), EOF.T)));
         assertThat(collector.getDiagnostics(), hasSize(is(0)));
+    }
+
+    @Test
+    public void test_a_quote_a_LF_a_quote_CR_LF() {
+
+        List<RhoToken> tokens = tokenize("a\"b\nc\"d\r\n", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("\"b"), IDENT.T("c"), ERROR.T("\"d"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_STRING_UNCLOSED)
+                        .line("a\"b\n").row(1).col(2).len(2).offset(1),
+                error(ERR_CODE_STRING_UNCLOSED)
+                        .line("c\"d\r\n").row(2).col(2).len(2).offset(5)
+        );
+    }
+
+    @Test
+    public void test_a_quote_a_CR_LF_a_quote_LF() {
+
+        List<RhoToken> tokens = tokenize("a\"b\r\nc\"d\n", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("\"b"), IDENT.T("c"), ERROR.T("\"d"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_STRING_UNCLOSED)
+                        .line("a\"b\r\n").row(1).col(2).len(2).offset(1),
+                error(ERR_CODE_STRING_UNCLOSED)
+                        .line("c\"d\n").row(2).col(2).len(2).offset(6)
+        );
     }
 }
 

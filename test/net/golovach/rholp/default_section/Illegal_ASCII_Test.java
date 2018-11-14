@@ -1,4 +1,4 @@
-package net.golovach.rholp.codepoint;
+package net.golovach.rholp.default_section;
 
 import net.golovach.rholp.RhoToken;
 import net.golovach.rholp.log.impl.DiagnosticCollector;
@@ -26,7 +26,7 @@ public class Illegal_ASCII_Test {
         List<RhoToken> tokens = tokenize("\u0000", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.T("\\u0000"), EOF.T)));
+                ERROR.T("\u0000"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("\u0000").row(1).len(1).col(1).offset(0)
@@ -39,7 +39,7 @@ public class Illegal_ASCII_Test {
         List<RhoToken> tokens = tokenize("\u0000\u0001", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.T("\\u0000"), ERROR.T("\\u0001"), EOF.T)));
+                ERROR.T("\u0000"), ERROR.T("\u0001"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("\u0000\u0001").row(1).len(1).col(1).offset(0),
@@ -53,7 +53,7 @@ public class Illegal_ASCII_Test {
         List<RhoToken> tokens = tokenize("\u0000 \u0001", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.T("\\u0000"), ERROR.T("\\u0001"), EOF.T)));
+                ERROR.T("\u0000"), ERROR.T("\u0001"), EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(
                 error(CODE).line("\u0000 \u0001").row(1).len(1).col(1).offset(0),
@@ -86,25 +86,25 @@ public class Illegal_ASCII_Test {
                 "", collector);
 
         assertThat(tokens, is(asList(
-                ERROR.T("\\u0000"), ERROR.T("\\u0001"),
-                ERROR.T("\\u0002"), ERROR.T("\\u0003"),
-                ERROR.T("\\u0004"), ERROR.T("\\u0005"),
-                ERROR.T("\\u0006"), ERROR.T("\\u0007"),
-                ERROR.T("\\u0008"),
+                ERROR.T("\u0000"), ERROR.T("\u0001"),
+                ERROR.T("\u0002"), ERROR.T("\u0003"),
+                ERROR.T("\u0004"), ERROR.T("\u0005"),
+                ERROR.T("\u0006"), ERROR.T("\u0007"),
+                ERROR.T("\u0008"),
 //                ERROR.T("\t"),
 //                ERROR.T("\n"),
-                ERROR.T("\\u000B"),
+                ERROR.T("\u000B"),
 //                ERROR.T("\f"),
 //                ERROR.T("\r"),
-                ERROR.T("\\u000E"), ERROR.T("\\u000F"),
-                ERROR.T("\\u0010"), ERROR.T("\\u0011"),
-                ERROR.T("\\u0012"), ERROR.T("\\u0013"),
-                ERROR.T("\\u0014"), ERROR.T("\\u0015"),
-                ERROR.T("\\u0016"), ERROR.T("\\u0017"),
-                ERROR.T("\\u0018"), ERROR.T("\\u0019"),
-                ERROR.T("\\u001A"), ERROR.T("\\u001B"),
-                ERROR.T("\\u001C"), ERROR.T("\\u001D"),
-                ERROR.T("\\u001E"), ERROR.T("\\u001F"),
+                ERROR.T("\u000E"), ERROR.T("\u000F"),
+                ERROR.T("\u0010"), ERROR.T("\u0011"),
+                ERROR.T("\u0012"), ERROR.T("\u0013"),
+                ERROR.T("\u0014"), ERROR.T("\u0015"),
+                ERROR.T("\u0016"), ERROR.T("\u0017"),
+                ERROR.T("\u0018"), ERROR.T("\u0019"),
+                ERROR.T("\u001A"), ERROR.T("\u001B"),
+                ERROR.T("\u001C"), ERROR.T("\u001D"),
+                ERROR.T("\u001E"), ERROR.T("\u001F"),
                 EOF.T)));
 
         verify(collector.getDiagnostics()).eqTo(

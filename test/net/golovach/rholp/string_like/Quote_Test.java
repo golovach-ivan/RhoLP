@@ -17,6 +17,9 @@ import static org.hamcrest.Matchers.is;
 
 public class Quote_Test {
 
+    static final String ERR_CODE_ABSENT_OPERATOR = "lexer.err.operator.absent.single-quote";
+    static final String ERR_CODE_ABSENT_LITERAL = "lexer.err.literal.absent.single-quote";
+
     final DiagnosticCollector collector = new DiagnosticCollector();
 
     @Test
@@ -26,7 +29,7 @@ public class Quote_Test {
 
         assertThat(tokens, is(asList(ERROR.T("'"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.operator.absent.single-quote")
+                error(ERR_CODE_ABSENT_OPERATOR)
                         .line("'").row(1).col(1).len(1).offset(0));
     }
 
@@ -37,7 +40,7 @@ public class Quote_Test {
 
         assertThat(tokens, is(asList(IDENT.T("a"), ERROR.T("'"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.operator.absent.single-quote")
+                error(ERR_CODE_ABSENT_OPERATOR)
                         .line("a'").row(1).col(2).len(1).offset(1));
     }
 
@@ -46,10 +49,10 @@ public class Quote_Test {
 
         List<RhoToken> tokens = tokenize("'a", collector);
 
-        assertThat(tokens, is(asList(ERROR.T("'a"), EOF.T)));
+        assertThat(tokens, is(asList(ERROR.T("'"), IDENT.T("a"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.operator.absent.single-quote")
-                        .line("'a").row(1).col(1).len(2).offset(0));
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("'a").row(1).col(1).len(1).offset(0));
     }
 
     @Test
@@ -57,10 +60,10 @@ public class Quote_Test {
 
         List<RhoToken> tokens = tokenize("a'b", collector);
 
-        assertThat(tokens, is(asList(IDENT.T("a"), ERROR.T("'b"), EOF.T)));
+        assertThat(tokens, is(asList(IDENT.T("a"), ERROR.T("'"), IDENT.T("b"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.operator.absent.single-quote")
-                        .line("a'b").row(1).col(2).len(2).offset(1));
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("a'b").row(1).col(2).len(1).offset(1));
     }
 
     @Test
@@ -70,7 +73,7 @@ public class Quote_Test {
 
         assertThat(tokens, is(asList(ERROR.T("''"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.literal.absent.single-quote")
+                error(ERR_CODE_ABSENT_LITERAL)
                         .line("''").row(1).col(1).len(2).offset(0));
     }
 
@@ -81,7 +84,7 @@ public class Quote_Test {
 
         assertThat(tokens, is(asList(ERROR.T("'b'"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.literal.absent.single-quote")
+                error(ERR_CODE_ABSENT_LITERAL)
                         .line("'b'").row(1).col(1).len(3).offset(0));
     }
 
@@ -92,8 +95,88 @@ public class Quote_Test {
 
         assertThat(tokens, is(asList(IDENT.T("a"), ERROR.T("'b'"), IDENT.T("c"), EOF.T)));
         verify(collector.getDiagnostics()).eqTo(
-                error("lexer.err.literal.absent.single-quote")
+                error(ERR_CODE_ABSENT_LITERAL)
                         .line("a'b'c").row(1).col(2).len(3).offset(1));
+    }
+
+    @Test
+    public void test_a_quote_a_LF() {
+
+        List<RhoToken> tokens = tokenize("a'b\n", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("'"), IDENT.T("b"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("a'b\n").row(1).col(2).len(1).offset(1));
+    }
+
+    @Test
+    public void test_a_quote_a_CR() {
+
+        List<RhoToken> tokens = tokenize("a'b\r", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("'"), IDENT.T("b"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("a'b\r").row(1).col(2).len(1).offset(1));
+    }
+
+    @Test
+    public void test_a_quote_a_CR_LF() {
+
+        List<RhoToken> tokens = tokenize("a'b\r\n", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("'"), IDENT.T("b"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("a'b\r\n").row(1).col(2).len(1).offset(1));
+    }
+
+    @Test
+    public void test_a_quote_a_LF_CR() {
+
+        List<RhoToken> tokens = tokenize("a'b\n\r", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("'"), IDENT.T("b"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("a'b\n").row(1).col(2).len(1).offset(1));
+    }
+
+    @Test
+    public void test_a_quote_a_LF_a_quote_CR_LF() {
+
+        List<RhoToken> tokens = tokenize("a'b\nc'd\r\n", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("'"), IDENT.T("b"),
+                IDENT.T("c"), ERROR.T("'"), IDENT.T("d"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("a'b\n").row(1).col(2).len(1).offset(1),
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("c'd\r\n").row(2).col(2).len(1).offset(5)
+        );
+    }
+
+    @Test
+    public void test_a_quote_a_CR_LF_a_quote_LF() {
+
+        List<RhoToken> tokens = tokenize("a'b\r\nc'd\n", collector);
+
+        assertThat(tokens, is(asList(
+                IDENT.T("a"), ERROR.T("'"), IDENT.T("b"),
+                IDENT.T("c"), ERROR.T("'"), IDENT.T("d"), EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("a'b\r\n").row(1).col(2).len(1).offset(1),
+                error(ERR_CODE_ABSENT_OPERATOR)
+                        .line("c'd\n").row(2).col(2).len(1).offset(6)
+        );
     }
 }
 

@@ -12,7 +12,8 @@ public class RhoLangLexisChecker {
     public static void main(String[] args) throws IOException {
 
         if (args == null || args.length != 1 ) {
-            System.err.println("tool need one arg: path to RhoLang source");
+            System.err.println("Tool need one arg - path to RhoLang source.");
+            System.err.println("  Example: java -jar RhoLP.jar hello.rho");
             System.exit(1);
         } else {
             String content = new String(Files.readAllBytes(Paths.get(args[0])));

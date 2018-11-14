@@ -38,5 +38,16 @@ public class Bar_Test {
                 error("lexer.err.operator.absent.logic")
                         .line("||").row(1).col(1).len(2).offset(0));
     }
+
+    @Test
+    public void test_bar_bar_bar() {
+
+        List<RhoToken> tokens = tokenize("|||", collector);
+
+        assertThat(tokens, is(asList(ERROR.T("||"), PAR.T, EOF.T)));
+        verify(collector.getDiagnostics()).eqTo(
+                error("lexer.err.operator.absent.logic")
+                        .line("|||").row(1).col(1).len(2).offset(0));
+    }
 }
 

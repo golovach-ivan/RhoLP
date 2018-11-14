@@ -20,7 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(Parameterized.class)
-public class Floating_point_Test {
+public class Floating_point_ok_est {
 
     final DiagnosticCollector collector = new DiagnosticCollector();
 
@@ -32,10 +32,10 @@ public class Floating_point_Test {
                 {"0d"},
                 {"0D"},
                 //
-                {"42f"},
-                {"42F"},
-                {"42d"},
-                {"42D"},
+                {"11f"},
+                {"11F"},
+                {"11d"},
+                {"11D"},
                 //
                 {"0.0"},
                 {"0.0f"},
@@ -43,11 +43,11 @@ public class Floating_point_Test {
                 {"0.0d"},
                 {"0.0D"},
                 //
-                {"42.42"},
-                {"42.42f"},
-                {"42.42F"},
-                {"42.42d"},
-                {"42.42D"},
+                {"11.11"},
+                {"11.11f"},
+                {"11.11F"},
+                {"11.11d"},
+                {"11.11D"},
                 //
                 {"1."},
                 {"1.f"},
@@ -61,17 +61,17 @@ public class Floating_point_Test {
                 {".1d"},
                 {".1D"},
                 //
-                {".42"},
-                {".42f"},
-                {".42F"},
-                {".42d"},
-                {".42D"},
+                {".11"},
+                {".11f"},
+                {".11F"},
+                {".11d"},
+                {".11D"},
                 //
-                {"42."},
-                {"42.f"},
-                {"42.F"},
-                {"42.d"},
-                {"42.D"},
+                {"11."},
+                {"11.f"},
+                {"11.F"},
+                {"11.d"},
+                {"11.D"},
                 //
                 {"1e1"},
                 {"1e1f"},

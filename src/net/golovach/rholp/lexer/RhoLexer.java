@@ -1,57 +1,64 @@
 package net.golovach.rholp.lexer;
 
 import net.golovach.rholp.RhoToken;
+import net.golovach.rholp.RhoTokenType;
+import net.golovach.rholp.log.Diagnostic;
 import net.golovach.rholp.log.DiagnosticListener;
+import net.golovach.rholp.log.LineMap;
 import net.golovach.rholp.log.impl.LineMapImpl;
 import net.golovach.rholp.log.impl.NopListener;
 import net.golovach.rholp.msg.AbsentKeywords;
 import net.golovach.rholp.msg.MisspelledKeywords;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.Character.*;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.regex.Pattern.compile;
+import static java.util.stream.Stream.generate;
 import static net.golovach.rholp.RhoTokenType.*;
+import static net.golovach.rholp.lexer.LexerConst.*;
+import static net.golovach.rholp.log.Diagnostic.Kind.ERROR;
+import static net.golovach.rholp.log.Diagnostic.Kind.*;
 
 public class RhoLexer {
-    public static final String FILE_LEXER_NOTES = "/lexer-notes.properties";
-    public static final String FILE_LEXER_WARNS = "/lexer-warns.properties";
-    public static final String FILE_LEXER_ERRORS = "/lexer-errors.properties";
-
-    private final Deque<RhoToken> returnedTokens = new ArrayDeque<>();
+    private final LineMap lineMap;
     private final DiagnosticListener listener;
+    private final Properties messages;
+    //
+    // need this for Long.MIN_VALUE parsing workaround
+    private RhoToken prevToken = null;
     private LexerState state;
+    //
 
     public RhoLexer(String content) {
-        this(content, new NopListener());
+        this(content, new NopListener(), loadDefaultMessages());
     }
 
     public RhoLexer(String content, DiagnosticListener listener) {
-        this.listener = listener;
-        this.state = new LexerState(content, listener, new LineMapImpl(content), loadDefaultMessages());
+        this(content, listener, loadDefaultMessages());
     }
 
     public RhoLexer(String content, DiagnosticListener listener, Properties messages) {
+        this.state = new LexerState(content);
         this.listener = listener;
-        this.state = new LexerState(content, listener, new LineMapImpl(content), messages);
+        this.messages = messages;
+        this.lineMap = new LineMapImpl(content);
     }
 
-    private Properties loadDefaultMessages() {
-        Properties notes = new Properties();
-        Properties warns = new Properties();
-        Properties errors = new Properties();
-        Properties result = new Properties();
-
+    private static Properties loadDefaultMessages() {
         try {
-            notes.load(getClass().getResourceAsStream(FILE_LEXER_NOTES));
-            warns.load(getClass().getResourceAsStream(FILE_LEXER_WARNS));
-            errors.load(getClass().getResourceAsStream(FILE_LEXER_ERRORS));
-
-            result.putAll(notes);
-            result.putAll(warns);
-            result.putAll(errors);
-
+            Properties result = new Properties();
+            result.load(RhoLexer.class.getResourceAsStream(FILE_LEXER_NOTES));
+            result.load(RhoLexer.class.getResourceAsStream(FILE_LEXER_WARNS));
+            result.load(RhoLexer.class.getResourceAsStream(FILE_LEXER_ERRORS));
             return result;
         } catch (IOException ex) {
             throw new RuntimeException(ex); //todo: RuntimeException?
@@ -59,217 +66,178 @@ public class RhoLexer {
     }
 
     public RhoToken readToken() {
-        RhoToken result = readTokenImpl();
-        returnedTokens.add(result);
-        return result;
+        return prevToken = readToken0();
     }
 
-    private RhoToken readTokenImpl() {
-        while (true) {
-            state = state.cleanMem();
+    private RhoToken readToken0() {
+        cleanMem();
 
-            if (state.isEOF()) {
-                listener.eof();
-                return EOF.T;
-            }
-
-            if (state.isLetter()) {
-                return processLetter();
-            }
-
-            if (state.isDigit()) {
-                return processNumber();
-            }
-
-            switch (state.ch()) {
-                // ============================== Whitespaces
-                case ' ':
-                case '\t':
-                case '\f':
-                    skipChar();
-                    return readToken();
-                // ============================== Line terminations
-                case '\n':
-                case '\r':
-                    return processLineEnd();
-                // ============================== Separators: (, ), [, ], {, }
-                case '(':
-                    skipChar();
-                    return LPAREN.T;
-                case ')':
-                    skipChar();
-                    return RPAREN.T;
-                case '[':
-                    skipChar();
-                    return LBRACKET.T;
-                case ']':
-                    skipChar();
-                    return RBRACKET.T;
-                case '{':
-                    skipChar();
-                    return LBRACE.T;
-                case '}':
-                    skipChar();
-                    return RBRACE.T;
-                // ============================== Separators: . , ; : =
-                case '.':
-                    return processDot();
-                case ',':
-                    skipChar();
-                    return COMMA.T;
-                case ';':
-                    skipChar();
-                    return SEMI.T;
-                case ':':
-                    return processColon();
-                case '=':
-                    return processEq();
-                // ============================== Under: '_'
-                case '_':
-                    return processUnder();
-                // ============================== Operators (used): +, -, *, /, >, <, |, !, ~, @
-                case '+':
-                    return processPlus();
-                case '-':
-                    return processMinus();
-                case '*':
-                    return processStar();
-                case '/':
-                    return processDiv();
-                case '\\':
-                    return processBackSlash();
-                case '<':
-                    return processLt();
-                case '>':
-                    return processGt();
-                case '|':
-                    return processBar();
-                case '!':
-                    return processBang();
-                case '~':
-                    return processTilde();
-                case '@':
-                    skipChar();
-                    return QUOTE.T;
-                // ============================== Operators (unused): &, %, ^, ?, #, $
-                case '&':
-                    return processAmp();
-                case '%':
-                    return processPercent();
-                case '^':
-                    return processHat();
-                case '?':
-                    return processQuestion();
-                case '#':
-                    return processHash();
-                case '$':
-                    return processDollar();
-                // ============================== String-like
-                case '"':
-                    return processString();
-                case '`':
-                    return processUri();
-                case '\'':
-                    return processQuote();
-                default:
-                    return processDefault();
-            }
+        if (state.isEOF()) {
+            listener.eof();
+            return EOF.T;
         }
+
+        if (state.isLetter()) {
+            return processLetter();
+        }
+
+        return match(
+                _default(this::processDefault),
+                // ========== Whitespaces, Line terminations
+                _case(" ", this::readToken),
+                _case("\t", this::readToken),
+                _case("\f", this::readToken),
+                _case("\n", this::readToken),
+                _case("\r\n", this::readToken),
+                _case("\r", this::readToken),
+
+                // ========== Under
+                _case("_", this::processUnder),
+
+                // ========== String-like
+                _case("\"", this::processString),
+                _case("`", this::processUri),
+                _case("'", this::processQuote),
+
+                // ========== Separators: (, ), [, ], {, }
+                _case("(", () -> LPAREN.T),
+                _case(")", () -> RPAREN.T),
+                _case("[", () -> LBRACKET.T),
+                _case("]", () -> RBRACKET.T),
+                _case("{", () -> LBRACE.T),
+                _case("}", () -> RBRACE.T),
+
+                // ========== Digits
+                _case("0x", this::readNumberHex),
+                _case("0X", this::readNumberHex),
+                _case("0", () -> memChars(0), this::readNumberDecimal),
+                _case("1", () -> memChars(0), this::readNumberDecimal),
+                _case("2", () -> memChars(0), this::readNumberDecimal),
+                _case("3", () -> memChars(0), this::readNumberDecimal),
+                _case("4", () -> memChars(0), this::readNumberDecimal),
+                _case("5", () -> memChars(0), this::readNumberDecimal),
+                _case("6", () -> memChars(0), this::readNumberDecimal),
+                _case("7", () -> memChars(0), this::readNumberDecimal),
+                _case("8", () -> memChars(0), this::readNumberDecimal),
+                _case("9", () -> memChars(0), this::readNumberDecimal),
+
+                // ========== Separators: . , ; : =
+                _case("...", () -> ELLIPSIS.T),
+                _case("..", err("operator.absent.dot-dot")),
+                _case(".0", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".1", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".2", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".3", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".4", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".5", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".6", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".7", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".8", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".9", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".", () -> DOT.T),
+
+                _case(",", () -> COMMA.T),
+                _case(";", () -> SEMI.T),
+                _case("::", err("operator.absent.colon-colon")),
+                _case(":", () -> COLON.T),
+                _case("===", err("operator.absent.eq")), // todo: add =/=
+                _case("==", () -> EQ_EQ.T),
+                _case("=>", () -> ARROW.T),
+                _case("=", () -> EQ.T),
+
+                // ========== Operators (used): +, -, *, /, >, <, |, !, ~, @
+                _case("++", () -> PLUS_PLUS.T),
+                _case("+=", err("operator.absent.compound-assignment")),
+                _case("+", () -> PLUS.T),
+                _case("--", () -> MINUS_MINUS.T),
+                _case("-=", err("operator.absent.compound-assignment")),
+                _case("->", err("operator.absent.arrow")),
+                _case("-", () -> MINUS.T),
+                _case("**", err("operator.absent.pow")),
+                _case("*=", err("operator.absent.compound-assignment")),
+                _case("*", () -> STAR.T),
+                _case("/\\", () -> CONJUNCTION.T),
+                _case("//", () -> skipChars(2), this::processCommentLine),
+                _case("/*", () -> memChars(2), this::processCommentBlock),
+                _case("/", () -> DIV.T),
+                _case("\\/", () -> DISJUNCTION.T),
+                _case("\\", err("operator.absent.back-slash")),
+                _case("<<<", err("operator.absent.arithmetic")),
+                _case("<<", err("operator.absent.arithmetic")),
+                _case("<~", err("operator.absent.arrow")),
+                _case("<=", () -> BACK_ARROW.T),
+                _case("<", () -> LT.T),
+                _case(">>>", err("operator.absent.arithmetic")),
+                _case(">>", err("operator.absent.arithmetic")),
+                _case(">=", () -> GT_EQ.T),
+                _case(">", () -> GT.T),
+                _case("||", err("operator.absent.logic")),
+                _case("|", () -> PAR.T),
+                _case("!!", () -> SEND_MULTIPLE.T),
+                _case("!=", () -> NOT_EQ.T),
+                _case("!", () -> SEND_SINGLE.T),
+                _case("~>", err("operator.absent.arrow")),
+                _case("~", () -> TILDE.T),
+                _case("@", () -> QUOTE.T),
+
+                // ========== Operators (unused): &, %, ^, ?, #, $
+                _case("&&", err("operator.absent.logic")),
+                _case("&", err("operator.absent.logic")),
+                _case("%%", () -> PERCENT_PERCENT.T),
+                _case("%", err("operator.absent.arithmetic")),
+                _case("^^", err("operator.absent.pow")),
+                _case("^", err("operator.absent.pow")),
+                _case("??", err("operator.absent")),
+                _case("?", err("operator.absent")),
+                _case("##", err("operator.absent")),
+                _case("#", err("operator.absent")),
+                _case("$$", err("operator.absent")),
+                _case("$", err("operator.absent"))
+        );
     }
 
     public List<RhoToken> readAll() {
-        List<RhoToken> result = new ArrayList<>();
-
-        RhoToken token = readToken();
-        while (token.type != EOF) {
-            result.add(token);
-            token = readToken();
-        }
-        result.add(token);
-
-        return result;
+        LinkedList<RhoToken> acc = new LinkedList<>();
+        return generate(this::readToken)
+                .map(e -> {
+                    acc.addLast(e);
+                    return acc;
+                })
+                .filter(deq -> deq.getLast() == EOF.T)
+                .findFirst().get();
     }
 
-    private RhoToken processLetter() {
-        memChar();
-        while (!state.isEOF() && (state.isLetter() || state.isDigit() || state.ch() == '_')) {
-            memChar();
-        }
-
-        // 'bundle0', 'bundle+', 'bundle-'
-        if (!state.isEOF() && state.isOneOf('0', '+', '-') &&
-                state.mem.equals("bundle")) {
-            memChar();
-            return keywordOrIdent(state.mem);
-        }
-
-        RhoToken result = keywordOrIdent(state.mem);
-
-        // check: identifier like keyword (typo)
-        if (result.type.group == TokenGroup.Identifier) {
-            Optional<String> correct = MisspelledKeywords.tryCorrectMisspelled(state.mem);
-            correct.ifPresent(c -> state.lexWarn("identifier.like-existing-keyword", c));
-        }
-
-        // check: identifier like absent keyword (language misunderstanding)
-        if (result.type.group == TokenGroup.Identifier) {
-            if (AbsentKeywords.contains(state.mem)) {
-                state.lexNote("identifier.like-absent-keyword");
-            }
-        }
-
-        return result;
-    }
-
-    private RhoToken processNumber() {
-        if (!state.isEOF() && state.ch() == '0') {
-            memChar();
-            if (!state.isEOF() && (state.ch() == 'x' || state.ch() == 'X')) {
-                memChar();
-                return readNumberHex();
-            } else {
-                return readNumberDecimal();
-            }
-        } else { // '1' ... '9'
-            memChar();
-            return readNumberDecimal();
-        }
-    }
+    // ============================== Numbers
 
     /**
      * Read a decimal number (64-bit integer without 'l'/'L' at the end).
      */
     private RhoToken readNumberDecimal() {
-
-        while (!state.isEOF() && state.isDigit()) {
-            memChar();
+        // === Try integer number with 'l'/'L' postfix (Java long literal)
+        Matcher longMatcher = LexerConst.LONG.matcher(state.content);
+        if (longMatcher.find()) {
+            memChars(longMatcher.toMatchResult().end());
+            return lexError("literal.absent.int-L-suffix");
         }
 
-        if (!state.isEOF() && state.ch() == '.') {
-            memChar();
-            return readFractionAndSuffix();
-        } else if (!state.isEOF() && state.isOneOf('e', 'E')) {
-            return readFractionAndSuffix();
-        } else if (!state.isEOF() && state.isOneOf('l', 'L')) {
-            memChar();
-            return state.lexError("literal.absent.int-L-suffix");
-        } else if (!state.isEOF() && state.isOneOf('f', 'F', 'd', 'D')) {
-            memChar();
-            return state.lexError("literal.absent.floating-point");
-        } else {
-            try {
-                Long.parseLong(state.mem);
-                return LITERAL_INT.T(state.mem);
-            } catch (NumberFormatException e) {
-                // Workaround for Long.MIN_VALUE
-                if ("9223372036854775808".equals(state.mem)
-                        && !returnedTokens.isEmpty()
-                        && returnedTokens.getLast() == MINUS.T) {
-                    return LITERAL_INT.T(state.mem);
-                } else {
-                    return state.lexError("literal.int-too-big");
-                }
-            }
+        // === Try "true" floating-point number (without integers like '123')
+        Matcher fpMatcher = TRUE_FLOATING_POINT.matcher(state.content);
+        if (fpMatcher.find()) {
+            memChars(fpMatcher.toMatchResult().end());
+            return lexError("literal.absent.floating-point");
+        }
+
+        // === Int literal?
+        while (state.isDigit()) {
+            memChars(1);
+        }
+        // Workaround for Long.MIN_VALUE
+        String prefix = (prevToken == MINUS.T) ? "-" : "";
+        try {
+            Long.parseLong(prefix + state.mem);
+            return LITERAL_INT.T(state.mem);
+        } catch (NumberFormatException ex) {
+            return lexError("literal.int-too-big");
         }
     }
 
@@ -277,27 +245,45 @@ public class RhoLexer {
      * Read fractional part and 'd'/'D' or 'f'/'F' suffix of floating point number.
      */
     private RhoToken readFractionAndSuffix() {
-        while (!state.isEOF() && state.isDigit()) {
-            memChar();
+        Matcher matcher = FRACTION_AND_SUFFIX.matcher(state.content);
+        if (matcher.find()) {
+            memChars(matcher.toMatchResult().end());
+            return lexError("literal.absent.floating-point");
+        } else {
+            throw new IllegalStateException("Called for inappropriate state.content");
         }
 
-        if (!state.isEOF() && state.isOneOf('e', 'E')) {
-            memChar();
-        }
 
-        if (!state.isEOF() && state.isOneOf('-', '+')) {
-            memChar();
-        }
+//        if (res.find()) {
+//            System.out.println(m.toMatchResult().start());
+//            System.out.println(m.toMatchResult().end());
+//        } else {
+//
+//        }
 
-        while (!state.isEOF() && state.isDigit()) {
-            memChar();
-        }
+//        return p.matcher(state.content).find();
 
-        if (!state.isEOF() && state.isOneOf('f', 'F', 'd', 'D')) {
-            memChar();
-        }
-
-        return state.lexError("literal.absent.floating-point");
+//        while (state.isDigit()) {
+//            memChars(1);
+//        }
+//
+//        if (state.isOneOf('e', 'E')) {
+//            memChars(1);
+//        }
+//
+//        if (state.isOneOf('-', '+')) {
+//            memChars(1);
+//        }
+//
+//        while (state.isDigit()) {
+//            memChars(1);
+//        }
+//
+//        if (state.isOneOf('f', 'F', 'd', 'D')) {
+//            memChars(1);
+//        }
+//
+//        return state.lexError("literal.absent.floating-point");
     }
 
     /**
@@ -306,399 +292,305 @@ public class RhoLexer {
     private RhoToken readNumberHex() {
 
         while (!state.isEOF() && (state.isDigit()
-                || ('a' <= state.ch() && state.ch() <= 'f')
-                || ('A' <= state.ch() && state.ch() <= 'F'))) {
-            memChar();
+                || state.isOneOf('a', 'b', 'c', 'd', 'e', 'f')
+                || state.isOneOf('A', 'B', 'C', 'D', 'E', 'F'))) {
+            memChars(1);
         }
 
-        return state.lexError("literal.absent.int-hex-format");
+        return lexError("literal.absent.int-hex-format");
     }
 
-    private RhoToken processLineEnd() {
-        if (!state.isEOF() && state.ch() == '\r') {
-            skipChar();
-            if (!state.isEOF() && state.ch() == '\n') {
-                skipChar();
+    // ============================== Identifiers
+    private RhoToken processLetter() {
+        while (state.isLetter() || state.isDigit() || state.is('_')) {
+            memChars(1);
+        }
+
+        // 'bundle0', 'bundle+', 'bundle-'
+        if (state.mem.equals("bundle") && state.isOneOf('0', '+', '-')) {
+            memChars(1);
+        }
+
+        RhoToken result = keywordOrIdent(state.mem);
+
+        if (result.type.group == TokenGroup.Identifier) {
+            // check: identifier like keyword (typo)
+            MisspelledKeywords.tryCorrectMisspelled(state.mem)
+                    .ifPresent(c -> lexWarn("identifier.like-existing-keyword", c));
+
+            // check: identifier like absent keyword (language misunderstanding)
+            if (AbsentKeywords.contains(state.mem)) {
+                lexNote("identifier.like-absent-keyword");
             }
-        } else {
-            skipChar();
         }
-        return readToken();
-    }
 
-    private RhoToken processDot() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '.') {
-            memChar();
-            if (!state.isEOF() && state.ch() == '.') { // '...'
-                skipChar();
-                return ELLIPSIS.T;
-            } else {                                   // '..'
-                return state.lexError("operator.absent.dot-dot");
-            }
-        } else if (!state.isEOF() && state.isDigit()) {
-            return readFractionAndSuffix();
-        } else {
-            return DOT.T;
-        }
-    }
-
-    private RhoToken processColon() {
-        memChar();
-        if (!state.isEOF() && state.ch() == ':') { // '::'
-            memChar();
-            return state.lexError("operator.absent", "::");
-        } else { //                 ':'
-            return COLON.T;
-        }
-    }
-
-    private RhoToken processEq() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '=') {
-            memChar();
-            if (!state.isEOF() && state.ch() == '=') { // '==='
-                memChar();
-                return state.lexError("operator.absent.eq");
-            } else {                                   // '=='
-                return EQ_EQ.T;
-            }
-        } else if (!state.isEOF() && state.ch() == '>') { // '=>'
-            skipChar();
-            return ARROW.T;
-        } else {                        // '='
-            return EQ.T;
-        }
+        return result;
     }
 
     private RhoToken processUnder() {
-        memChar();
-        if (!state.isEOF() && (state.isLetter() || state.isDigit() || state.ch() == '_')) {
-            while (!state.isEOF() && (state.isLetter() || state.isDigit() || state.ch() == '_')) {
-                memChar();
-            }
-            return keywordOrIdent(state.mem);
-        } else {
-            return WILDCARD.T;
+        while (state.isLetter() || state.isDigit() || state.is('_')) {
+            memChars(1);
         }
+
+        return (state.mem.equals("_")) ? WILDCARD.T : keywordOrIdent(state.mem);
     }
 
-    // ============================== Operators (used): +, -, *, /, >, <, |, !, ~, @
-    private RhoToken processPlus() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '+') {        // '++'
-            skipChar();
-            return PLUS_PLUS.T;
-        } else if (!state.isEOF() && state.ch() == '=') { // '+='
-            memChar();
-            return state.lexError("operator.absent.compound-assignment");
-        } else {                        // '+'
-            return PLUS.T;
-        }
-    }
-
-    private RhoToken processMinus() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '-') {        // '--'
-            skipChar();
-            return MINUS_MINUS.T;
-        } else if (!state.isEOF() && state.ch() == '=') { // '-='
-            memChar();
-            return state.lexError("operator.absent.compound-assignment");
-        } else if (!state.isEOF() && state.ch() == '>') { // '->'
-            memChar();
-            return state.lexError("operator.absent.arrow");
-        } else {                        // '-'
-            return MINUS.T;
-        }
-    }
-
-    private RhoToken processStar() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '*') {        // '**'
-            memChar();
-            return state.lexError("operator.absent.pow");
-        } else if (!state.isEOF() && state.ch() == '=') { // '*='
-            memChar();
-            return state.lexError("operator.absent.compound-assignment");
-        } else {                        // '-'
-            return STAR.T;
-        }
-    }
-
-    private RhoToken processDiv() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '\\') {       // '/\'
-            skipChar();
-            return CONJUNCTION.T;
-        } else if (!state.isEOF() && state.ch() == '/') { // '//'
-            skipChar();
-            return processCommentLine();
-        } else if (!state.isEOF() && state.ch() == '*') { // '/*'
-            memChar();
-            return processCommentBlock();
-        } else {                                          // '/'
-            return DIV.T;
-        }
-    }
-
+    // ============================== Comments
     private RhoToken processCommentLine() {
         while (!state.isEOF() && !state.isCRLF()) {
-            skipChar();
+            skipChars(1);
         }
         if (!state.isEOF()) {
-            skipChar();
+            skipChars(1);
         }
         return readToken();
     }
 
     private RhoToken processCommentBlock() {
         while (!state.isEOF() && !state.isCRLF()) {
-            if (state.ch() == '*') {     // '*'
-                memChar();
-                if (!state.isEOF() && state.ch() == '/') { // '*/'
-                    skipChar();
+            if (state.is('*')) {     // '*'
+                memChars(1);
+                if (state.is('/')) { // '*/'
+                    skipChars(1);
                     return readToken();
                 }
             } else {
-                memChar();
+                memChars(1);
             }
         }
 
-        return state.lexError("comment.unclosed");
-    }
-
-    private RhoToken processBackSlash() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '/') { // '\/'
-            skipChar();
-            return DISJUNCTION.T;
-        } else { //                 '\'
-            return state.lexError("operator.absent.back-slash");
-        }
-    }
-
-    private RhoToken processLt() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '<') {        // '<<'
-            memChar();
-            return state.lexError("operator.absent.arithmetic");
-        } else if (!state.isEOF() && state.ch() == '~') { // '<~'
-            memChar();
-            return state.lexError("operator.absent.arrow");
-        } else if (!state.isEOF() && state.ch() == '=') { // '<='
-            skipChar();
-            return BACK_ARROW.T;
-        } else { //                 '<'
-            return LT.T;
-        }
-    }
-
-    private RhoToken processGt() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '>') {
-            memChar();
-            if (!state.isEOF() && state.ch() == '>') {   // '>>>'
-                memChar();
-                return state.lexError("operator.absent.arithmetic");
-            } else {                                     // '>>'
-                return state.lexError("operator.absent.arithmetic");
-            }
-        } else if (!state.isEOF() && state.ch() == '=') { // '>='
-            skipChar();
-            return GT_EQ.T;
-        } else {                                          // '>'
-            return GT.T;
-        }
-    }
-
-    private RhoToken processBar() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '|') { // '||'
-            memChar();
-            return state.lexError("operator.absent.logic");
-        } else { //                 '|'
-            return PAR.T;
-        }
-    }
-
-    private RhoToken processBang() {
-        skipChar();
-        if (!state.isEOF() && state.ch() == '!') { // '!!'
-            skipChar();
-            return SEND_MULTIPLE.T;
-        } else if (!state.isEOF() && state.ch() == '=') { // '!='
-            skipChar();
-            return NOT_EQ.T;
-        } else { //                 '!'
-            return SEND_SINGLE.T;
-        }
-    }
-
-    private RhoToken processTilde() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '>') { // '~>'
-            memChar();
-            return state.lexError("operator.absent.arrow");
-        } else { //                 '~'
-            return TILDE.T;
-        }
-    }
-
-    private RhoToken processPercent() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '%') { // '%%'
-            skipChar();
-            return PERCENT_PERCENT.T;
-        } else { //                 '%'
-            return state.lexError("operator.absent.arithmetic");
-        }
-    }
-
-    // ============================== Operators (unused): &, ^, ?, #, $
-    private RhoToken processAmp() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '&') { // '&&'
-            memChar();
-            return state.lexError("operator.absent.logic");
-        } else { //                 '&'
-            return state.lexError("operator.absent.logic");
-        }
-    }
-
-    private RhoToken processHat() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '^') { // '^^'
-            memChar();
-            return state.lexError("operator.absent.pow");
-        } else {                                   // '^'
-            return state.lexError("operator.absent.pow");
-        }
-    }
-
-    private RhoToken processQuestion() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '?') { // '??'
-            memChar();
-            return state.lexError("operator.absent");
-        } else {                                   // '?'
-            return state.lexError("operator.absent");
-        }
-    }
-
-    private RhoToken processHash() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '#') { // '##'
-            memChar();
-            return state.lexError("operator.absent");
-        } else {                                   // '#'
-            return state.lexError("operator.absent");
-        }
-    }
-
-    private RhoToken processDollar() {
-        memChar();
-        if (!state.isEOF() && state.ch() == '$') { // '$$'
-            memChar();
-            return state.lexError("operator.absent");
-        } else {                                   // '$'
-            return state.lexError("operator.absent");
-        }
+        return lexError("comment.unclosed");
     }
 
     // ============================== String-like
-    // todo: warn UTF-unsupported
+    // todo: warn UTF-unsupported - lambda in string literal
     private RhoToken processString() {
-        memChar();
-        while (!state.isEOF() && state.ch() != '"' && !state.isCRLF()) {
-            memChar();
+        while (!state.isEOF() && !state.isOneOf('"', '\r', '\n')) {
+            memChars(1);
         }
-        if (!state.isEOF() && state.ch() == '"') {
-            memChar();
+        if (state.is('"')) {
+            memChars(1);
             return LITERAL_STRING.T(state.mem.substring(1, state.mem.length() - 1));
         } else {
-            return state.lexError("literal.string.unclosed");
+            return lexError("literal.string.unclosed");
         }
     }
 
     private RhoToken processUri() {
-        memChar();
-        while (!state.isEOF() && state.ch() != '`' && !state.isCRLF()) {
-            memChar();
+        while (!state.isEOF() && !state.isOneOf('`', '\r', '\n')) {
+            memChars(1);
         }
-        if (!state.isEOF() && state.ch() == '`') {
-            memChar();
+        if (state.is('`')) {
+            memChars(1);
             return LITERAL_URI.T(state.mem.substring(1, state.mem.length() - 1));
         } else {
-            return state.lexError("literal.uri.unclosed");
+            return lexError("literal.uri.unclosed");
         }
     }
 
     private RhoToken processQuote() {
-        memChar();
-        while (!state.isEOF() && state.ch() != '\'' && !state.isCRLF()) {
-            memChar();
+        while (!state.isEOF() && !state.isOneOf('\'', '\r', '\n')) {
+            memChars(1);
         }
-        if (!state.isEOF() && state.ch() == '\'') {
-            memChar();
-            return state.lexError("literal.absent.single-quote");
+        if (state.is('\'')) {
+            memChars(1);
+            return lexError("literal.absent.single-quote");
         } else {
-//            pushbackMem();
-            return state.lexError("operator.absent.single-quote");
+            restoreMem();
+            memChars(1);
+            return lexError("operator.absent.single-quote");
         }
     }
 
     // ============================== Unicode + internals
     private RhoToken processDefault() {
-        char ch0 = state.ch();
-        String codepoint0 = String.valueOf((int) ch0);
-        String hex0 = format("'\\u%04X'", (int) ch0);
-        memChar();
+        char ch = state.content.charAt(0);
+        String codepoint = String.valueOf((int) ch);
+        String hex = format("'\\u%04X'", (int) ch);
+        memChars(1);
 
-        if (ch0 <= '\u0080') {
-            // ========== Illegal ASCII
-            return state.lexError("codepoint.illegal.ascii", hex0, codepoint0);
-        } else if (isDefined(ch0)) {
-            // ========== Correct but illegal 1-char Unicode
-            return state.lexError("codepoint.illegal.unicode-1-char", "" + ch0, hex0, codepoint0);
-        } else if (isHighSurrogate(ch0)) {
-            // todo: add state.isEOF() checking
-            char ch1 = state.ch();
-            String hex01 = format("'\\u%04X\\u%04X'", (int) ch0, (int) ch1);
-            skipChar();
-            if (isLowSurrogate(ch1)) {
-                // ========== Correct but illegal 2-char Unicode
-                char[] arr = {ch0, ch1};
-                return state.lexError("codepoint.illegal.unicode-2-chars",
-                        new String(arr), hex01, "" + codePointAt(arr, 0));
+        // (no surrogate/supplementary checking)
+        if (ch <= 127) {
+            // Illegal ASCII: 0 <= ch0 < 32
+            if (ch < ' ' || ch == 127) {
+                return lexError("codepoint.illegal.ascii", hex, codepoint);
             } else {
-                // ========== Incorrect 2-chars unicode combination
-                return state.lexError("codepoint.incorrect-encoding.2-chars", hex01);
+                throw new AssertionError(hex + " should be processed in readToken()");
             }
+        } else if (isDefined(ch)) {
+            // Correct but illegal 1-char Unicode: 128 <= ch0 && isDefined(ch0)
+            return lexError("codepoint.illegal.unicode-1-char", "" + ch, hex, codepoint);
         } else {
-            // ========== Incorrect 1-char unicode
-            return state.lexError("codepoint.incorrect-encoding.1-char", hex0);
+            // Incorrect 1-char unicode: 128 <= ch0 && !isDefined(ch0)
+            return lexError("codepoint.illegal.undefined", hex);
         }
     }
 
-    private void skipChar() {
-        state = state.skipChar();
+    // ============================================================
+    // =====================       DSL       ======================
+    // ============================================================
+    private RhoToken match(Default _default, Case... cases) {
+        // Pattern Matching on _case type
+        for (Case _case : cases) {
+            // === CaseToken
+            if (_case instanceof CaseToken) {
+                if (state.content.startsWith(_case.prefix)) {
+                    if (((CaseToken) _case).task == NOP) {
+                        memChars(_case.prefix.length());
+                    } else {
+                        ((CaseToken) _case).task.run();
+                    }
+                    return ((CaseToken) _case).tokenSrc.get();
+                }
+                // === CaseErr
+            } else if (_case instanceof CaseErr) {
+                if (state.content.startsWith(_case.prefix)) {
+                    memChars(_case.prefix.length());
+                    return lexError(((CaseErr) _case).err.code, ((CaseErr) _case).err.args);
+                }
+            } else {
+                throw new AssertionError("Any Case is CaseToken or CaseErr (closed hierarchy) not " + _case.getClass());
+            }
+        }
+
+        return _default.st.get();
     }
 
-    private void memChar() {
-        state = state.memChar();
+    private static CaseToken _case(String s, Runnable r, Supplier<RhoToken> st) {
+        return new CaseToken(s, r, st);
+    }
+
+    private static CaseToken _case(String s, Supplier<RhoToken> st) {
+        return new CaseToken(s, NOP, st);
+    }
+
+    private static CaseErr _case(String s, Err err) {
+        return new CaseErr(s, err);
+    }
+
+    private static abstract class Case {
+        final String prefix;
+
+        public Case(String prefix) {
+            this.prefix = prefix;
+        }
+    }
+
+    private static class Default {
+        final Supplier<RhoToken> st;
+
+        public Default(Supplier<RhoToken> st) {
+            this.st = st;
+        }
+    }
+
+    private static Default _default(Supplier<RhoToken> st) {
+        return new Default(st);
+    }
+
+    private static class CaseErr extends Case {
+        final Err err;
+
+        public CaseErr(String prefix, Err err) {
+            super(prefix);
+            this.err = err;
+        }
+    }
+
+    private static class CaseToken extends Case {
+        final Runnable task;
+        final Supplier<RhoToken> tokenSrc;
+
+        CaseToken(String prefix, Runnable task, Supplier<RhoToken> tokenSrc) {
+            super(prefix);
+            this.task = task;
+            this.tokenSrc = tokenSrc;
+        }
+    }
+
+    private static class Err {
+        final String code;
+        final String[] args;
+
+        Err(String code, String[] args) {
+            this.code = code;
+            this.args = args;
+        }
+    }
+
+    private Err err(String code, String... args) {
+        return new Err(code, args);
+    }
+
+    private static final Runnable NOP = () -> {
+    };
+
+    // ============================================================
+    // =====================  STATE MACHINE  ======================
+    // ============================================================
+    private void cleanMem() {
+        this.state = new LexerState(
+                state.offset,
+                state.content,
+                "");
+    }
+
+    private void memChars(int count) {
+        this.state = new LexerState(
+                state.offset + count,
+                state.content.substring(count),
+                state.mem + state.content.substring(0, count));
+    }
+
+    private void skipChars(int count) {
+        this.state = new LexerState(
+                state.offset + count,
+                state.content.substring(count),
+                "");
+    }
+
+    private void restoreMem() {
+        this.state = new LexerState(
+                state.offset - state.mem.length(),
+                state.mem + state.content,
+                "");
+    }
+
+    // ============================================================
+    // ==================  DIAGNOSTIC MESSAGES  ===================
+    // ============================================================
+    public RhoToken lexNote(String code, String... args) {
+        return lexMsg(NOTE, NOTE_PREFIX + code, args);
+    }
+
+    public RhoToken lexWarn(String code, String... args) {
+        return lexMsg(WARN, WARN_PREFIX + code, args);
+    }
+
+    public RhoToken lexError(String code, String... args) {
+        return lexMsg(ERROR, ERROR_PREFIX + code, args);
+    }
+
+    private RhoToken lexMsg(Diagnostic.Kind kind, String code, String... args) {
+
+        String[] argsWithFirstMem = new String[args.length + 1];
+        argsWithFirstMem[0] = state.mem;
+        System.arraycopy(args, 0, argsWithFirstMem, 1, args.length);
+
+        RhoLexer.this.listener.report(new Diagnostic(
+                kind,
+                code,
+                format(messages.getProperty(code), (Object[]) argsWithFirstMem),
+                messages.getProperty(code),
+                asList(args),
+                //
+                lineMap.offsetToSrcLine(state.offset - state.mem.length()),
+                lineMap.offsetToCol(state.offset - state.mem.length()),
+                state.mem.length(),
+                //
+                state.offset - state.mem.length(),
+                lineMap.offsetToRow(state.offset - state.mem.length())));
+
+        return RhoTokenType.ERROR.T(state.mem);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

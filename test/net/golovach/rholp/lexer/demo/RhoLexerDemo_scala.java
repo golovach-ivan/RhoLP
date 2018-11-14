@@ -14,9 +14,6 @@ import static net.golovach.rholp.RhoTokenType.*;
 
 public class RhoLexerDemo_scala {
 
-    static final String content0
-            = "type T = Functor[({ type λ[α] = Map[Int, α] })#λ]";
-
     static final String content1 = "" +
             "char ch = scanChar();\n" +
             "switch (ch) {\n" +
@@ -65,10 +62,15 @@ public class RhoLexerDemo_scala {
 //                "val first: List ~> Option = λ[List ~> Option](_.headOption)";
 //                "type ~>[-F[_], +G[_]] = NaturalTransformation[F, G]";
 
+    static final String content
+//            = "type T = Functor[({ type λ[α] = Map[Int, α] })#λ]";
+//            = "α";
+            = "a\u1DE7c";
+
     public static void main(String[] args) {
 
         DiagnosticListener listener = new GroupedPrinter(System.out);
-        RhoLexer lexer = new RhoLexer(content0, listener);
+        RhoLexer lexer = new RhoLexer(content, listener);
 
         List<RhoToken> tokens = lexer.readAll();
     }
