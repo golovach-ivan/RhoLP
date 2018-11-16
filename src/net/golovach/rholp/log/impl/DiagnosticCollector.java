@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.synchronizedList;
+
 /**
  * Provides an easy way to collect diagnostics in a list.
  *
@@ -14,7 +16,7 @@ import java.util.List;
  */
 public class DiagnosticCollector implements DiagnosticListener {
     private List<Diagnostic> diagnostics =
-            Collections.synchronizedList(new ArrayList<Diagnostic>());
+            synchronizedList(new ArrayList<Diagnostic>());
 
     public void report(Diagnostic diagnostic) {
         if (diagnostic == null) {
@@ -29,7 +31,7 @@ public class DiagnosticCollector implements DiagnosticListener {
      * @return a list view of diagnostics
      */
     public List<Diagnostic> getDiagnostics() {
-        return Collections.unmodifiableList(diagnostics);
+        return new ArrayList<>(diagnostics);
     }
 
     @Override

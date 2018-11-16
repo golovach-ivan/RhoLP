@@ -88,7 +88,7 @@ public class RhoLexer {
                 _case("\t", this::readToken),
                 _case("\f", this::readToken),
                 _case("\n", this::readToken),
-                _case("\r\n", this::readToken),
+                _case("\r\n", this::readToken), //todo:remove
                 _case("\r", this::readToken),
 
                 // ========== Under
@@ -124,7 +124,7 @@ public class RhoLexer {
                 // ========== Separators: . , ; : =
                 _case("...", () -> ELLIPSIS.T),
                 _case("..", err("operator.absent.dot-dot")),
-                _case(".0", () -> memChars(0), this::readFractionAndSuffix),
+                _case(".0", () -> memChars(0), this::readFractionAndSuffix), //todo: remove memChars
                 _case(".1", () -> memChars(0), this::readFractionAndSuffix),
                 _case(".2", () -> memChars(0), this::readFractionAndSuffix),
                 _case(".3", () -> memChars(0), this::readFractionAndSuffix),
@@ -166,6 +166,7 @@ public class RhoLexer {
                 _case("<<", err("operator.absent.arithmetic")),
                 _case("<~", err("operator.absent.arrow")),
                 _case("<=", () -> BACK_ARROW.T),
+                _case("<-", () -> BIND_LINEAR.T),
                 _case("<", () -> LT.T),
                 _case(">>>", err("operator.absent.arithmetic")),
                 _case(">>", err("operator.absent.arithmetic")),
@@ -582,7 +583,7 @@ public class RhoLexer {
                 code,
                 format(messages.getProperty(code), (Object[]) argsWithFirstMem),
                 messages.getProperty(code),
-                asList(args),
+                asList(argsWithFirstMem),
                 //
                 lineMap.offsetToSrcLine(state.offset - state.mem.length()),
                 lineMap.offsetToCol(state.offset - state.mem.length()),
